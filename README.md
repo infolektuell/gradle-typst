@@ -34,7 +34,7 @@ Every source set tracks changes in the following subdirectories:
 
 In the _build.gradle.kts_ next to _src_, the plugin must be configured:
 
-```
+```gradle kotlin dsl
 plugins {
     // Good to have some standard tasks like clean
     id("base")
