@@ -6,10 +6,11 @@ import de.infolektuell.gradle.typst.tasks.MergePDFTask
 import de.infolektuell.gradle.typst.tasks.TypstCompileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.BasePlugin
 
 class GradleTypstPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-      val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
+        val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
       extension.compiler.convention("typst")
       extension.sourceSets.configureEach { s ->
         val sourceRoot = project.layout.projectDirectory.dir("src/${s.name}")
@@ -54,9 +55,7 @@ class GradleTypstPlugin : Plugin<Project> {
             task.dependsOn(project.tasks.withType(TypstCompileTask::class.java))
             task.dependsOn(project.tasks.withType(MergePDFTask::class.java))
         }
-        project.tasks.named("assemble").configure { task ->
-            task.dependsOn(typstCompileTask)
-        }
+        project.tasks.findByName(BasePlugin.ASSEMBLE_TASK_NAME)?.dependsOn(typstCompileTask)
     }
   companion object {
     const val PLUGIN_NAME = "de.infolektuell.typst"
