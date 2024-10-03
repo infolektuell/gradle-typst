@@ -1,4 +1,5 @@
 package de.infolektuell.gradle.typst.extensions
+
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.provider.Property
 

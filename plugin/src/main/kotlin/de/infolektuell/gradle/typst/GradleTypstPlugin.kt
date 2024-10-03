@@ -1,6 +1,7 @@
 package de.infolektuell.gradle.typst
 
 import de.infolektuell.gradle.typst.extensions.TypstExtension
+import de.infolektuell.gradle.typst.tasks.ConvertImagesTask
 import de.infolektuell.gradle.typst.tasks.MergePDFTask
 import de.infolektuell.gradle.typst.tasks.TypstCompileTask
 import org.gradle.api.Plugin
@@ -12,50 +13,50 @@ class GradleTypstPlugin : Plugin<Project> {
       extension.compiler.convention("typst")
       extension.sourceSets.configureEach { s ->
         val sourceRoot = project.layout.projectDirectory.dir("src/${s.name}")
-        s.documentsRoot.convention(sourceRoot.dir("typst"))
-        s.typst.srcDir(s.documentsRoot)
-        s.data.srcDir(sourceRoot.dir("data"))
-        s.fonts.srcDir(sourceRoot.dir("fonts"))
-        s.images.srcDir(sourceRoot.dir("images"))
+        s.typst.add(sourceRoot.dir("typst"))
+        s.data.add(sourceRoot.dir("data"))
+        s.fonts.add(sourceRoot.dir("fonts"))
+        s.images.add(sourceRoot.dir("images"))
         s.useLocalPackages()
-        s.destination.convention(project.layout.buildDirectory.dir("typst/${s.name}"))
+          s.destinationDir.convention(project.layout.buildDirectory.dir("typst/${s.name}"))
       }
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
-        task.rootDir.convention(project.layout.projectDirectory.asFile.absolutePath)
         task.compiler.convention(extension.compiler)
+          task.root.convention(project.layout.projectDirectory.asFile.absolutePath)
       }
       extension.sourceSets.all { s ->
-        val typstTask = project.tasks.register("${s.name}TypstCompile", TypstCompileTask::class.java) { task ->
-          s.documents.get().forEach { name ->
-            task.addDocument(name).apply {
-              source.set(s.documentsRoot.file("$name.typ"))
-              target.set(s.destination.file("$name.pdf"))
-            }
-          }
-          task.sources.from(s.typst - s.documentFiles.files)
-          val fontDirs = s.fonts.sourceDirectories.filter { it.exists() }
-          if (!fontDirs.isEmpty) task.fontPath.set(fontDirs.first())
-          task.data.put("gitHash", project.version.toString())
+        project.tasks.register("convert${s.name}Images", ConvertImagesTask::class.java) { task ->
+            task.source.convention(s.images.map { it.first()})
+            task.target.convention(project.layout.buildDirectory.dir("generated/magick/images"))
+            task.format.convention("png")
+            task.quality.convention(100)
+            s.images.add(task.target)
         }
-        val mergeTask = project.tasks.register("${s.name}TypstMerge", MergePDFTask::class.java) { task ->
-          typstTask.get().documents.forEach { doc ->
-            task.addDocument(doc.name).apply {
-              source.set(doc.target)
-            }
-          }
-          task.merged.set(s.destination.file(s.merged.map { "$it.pdf" }))
+          val typstTask = project.tasks.register("compile${s.name}Typst", TypstCompileTask::class.java) { task ->
+            task.documents.convention(s.documents)
+            task.variables.convention(s.inputs)
+            task.sources.data.convention(s.data)
+            task.sources.fonts.convention(s.fonts)
+            task.sources.images.convention(s.images)
+          task.sources.typst.convention(s.typst)
+            task.destinationDir.convention(s.destinationDir)
         }
-        project.tasks.register("${s.name}Typst") { task ->
-          if (s.documents.get().isEmpty()) {
-            task.enabled = false
-            return@register
+          if (s.merged.isPresent) {
+              project.tasks.register("merge${s.name}Typst", MergePDFTask::class.java) { task ->
+                  task.documents.convention(typstTask.flatMap { it.compiled })
+                  task.merged.convention(s.merged)
+              }
           }
-          task.group = "build"
-          task.description = "Compile typst documents from ${s.name} source set"
-          task.dependsOn(typstTask)
-          if (s.merged.isPresent) task.dependsOn(mergeTask)
-        }
       }
+        val typstCompileTask = project.tasks.register("compileTypst") { task ->
+            task.group = "build"
+            task.description = "Compile typst documents"
+            task.dependsOn(project.tasks.withType(TypstCompileTask::class.java))
+            task.dependsOn(project.tasks.withType(MergePDFTask::class.java))
+        }
+        project.tasks.named("assemble").configure { task ->
+            task.dependsOn(typstCompileTask)
+        }
     }
   companion object {
     const val PLUGIN_NAME = "de.infolektuell.typst"

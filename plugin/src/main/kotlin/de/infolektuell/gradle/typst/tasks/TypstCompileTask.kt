@@ -1,59 +1,82 @@
 package de.infolektuell.gradle.typst.tasks
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.Named
-import org.gradle.api.NamedDomainObjectList
-import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.internal.provider.PropertyInternal
 import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.MapProperty
-import org.gradle.api.provider.Property
+import org.gradle.api.provider.*
 import org.gradle.api.tasks.*
-import org.gradle.internal.state.ModelObject
+import org.gradle.process.ExecOperations
+import org.gradle.workers.WorkAction
+import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import javax.inject.Inject
 
-abstract class TypstCompileTask @Inject constructor(private val executor: WorkerExecutor, private val objects: ObjectFactory) : DefaultTask() {
-  class Document(@Internal private val name: String, objects: ObjectFactory) : Named {
-    @get:InputFile
-    val source: RegularFileProperty = objects.fileProperty()
-    @get:OutputFile
-    val target: RegularFileProperty = objects.fileProperty()
-    override fun getName() = name
-  }
-  @get:Nested
-  val documents: NamedDomainObjectList<Document> = objects.namedDomainObjectList(Document::class.java)
-  fun addDocument(name: String): Document {
-    val doc = Document(name, objects)
-    // See https://github.com/gradle/gradle/issues/6619
-    (doc.target as PropertyInternal<*>).attachProducer(this as ModelObject)
-    documents.add(doc)
-    return doc
-  }
+abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, private val executor: WorkerExecutor) : DefaultTask() {
+    interface SourceDirectories {
+        @get:InputFiles
+        val data: SetProperty<Directory>
+        @get:InputFiles
+        val fonts: ListProperty<Directory>
+        @get:InputFiles
+        val images: SetProperty<Directory>
+        @get:InputFiles
+        val typst: SetProperty<Directory>
+    }
+
+    protected abstract class TypstAction @Inject constructor(private val execOperations: ExecOperations) : WorkAction<TypstAction.Params> {
+        interface Params : WorkParameters {
+            val compiler: Property<String>
+            val document: RegularFileProperty
+            val root: Property<String>
+            val variables: MapProperty<String, String>
+            val fontDirectories: ListProperty<Directory>
+            val target: RegularFileProperty
+        }
+
+        override fun execute() {
+            execOperations.exec { action ->
+                action.executable(parameters.compiler.get())
+                action.args("compile")
+                .args("--root", parameters.root.get())
+                parameters.fontDirectories.get().forEach { action.args("--font-path", it.asFile.absolutePath) }
+                parameters.variables.get().forEach { (k, v) -> action.args("--input", "$k=$v") }
+                action.args(parameters.document.get().asFile.absolutePath)
+                .args(parameters.target.asFile.get().absolutePath)
+            }
+        }
+    }
+
+    @get:Input
+    abstract val compiler: Property<String>
   @get:InputFiles
-  val sources: ConfigurableFileCollection = objects.fileCollection()
-  @get:Input
-  abstract val rootDir: Property<String>
-  @get:Input
-  abstract val data: MapProperty<String, String>
-  @get:Optional
-  @get:InputDirectory
-  abstract val fontPath: DirectoryProperty
-  @get:Input
-  abstract val compiler: Property<String>
+  val documents: ListProperty<RegularFile> = objects.listProperty(RegularFile::class.java)
+    @get:Input
+    abstract val root: Property<String>
+    @get:Input
+    abstract val variables: MapProperty<String, String>
+    @get:Nested
+    abstract val sources: SourceDirectories
+    @get:OutputDirectory
+    val destinationDir: DirectoryProperty = objects.directoryProperty()
+    @get:OutputFiles
+    val compiled: Provider<List<RegularFile>> = documents.zip(destinationDir) { docs, dest ->
+        docs.map { dest.file(it.asFile.nameWithoutExtension + ".pdf") }
+    }
+
   @TaskAction
-  fun compile () {
+  protected fun compile () {
     val queue = executor.noIsolation()
-    documents.forEach { document ->
+    documents.get().forEach { document ->
       queue.submit(TypstAction::class.java) { params ->
-        params.input.set(document.source)
-        params.output.set(document.target)
-        params.root.set(rootDir)
-        if (fontPath.isPresent) params.fontPath.set(fontPath)
-        params.inputs.set(data)
-        params.compiler.set(compiler)
+          params.compiler.set(compiler)
+        params.document.set(document)
+          params.root.set(root)
+          params.variables.set(variables)
+          params.fontDirectories.set(sources.fonts)
+          params.target.set(destinationDir.file(document.asFile.nameWithoutExtension + ".pdf"))
       }
     }
   }

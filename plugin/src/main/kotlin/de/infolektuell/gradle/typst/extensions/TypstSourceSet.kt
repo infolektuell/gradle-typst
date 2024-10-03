@@ -1,73 +1,45 @@
 package de.infolektuell.gradle.typst.extensions
-import org.gradle.api.Action
+
 import org.gradle.api.Named
 import org.gradle.api.file.*
-import org.gradle.api.model.ObjectFactory
-import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
-import org.gradle.api.provider.SetProperty
+import org.gradle.api.provider.*
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import javax.inject.Inject
 
-abstract class TypstSourceSet @Inject constructor(objects: ObjectFactory, private val layout: ProjectLayout) : Named {
-  abstract val documentsRoot: DirectoryProperty
-  abstract val documents: SetProperty<String>
-  val documentFiles = documentsRoot.files(documents.map { it.map { file -> file + ".typ" } })
-  val destination: DirectoryProperty = objects.directoryProperty()
-  abstract val merged: Property<String>
-  val typst: SourceDirectorySet = objects.sourceDirectorySet("typst", "Typst files").apply {
-    include("*.typ")
-    destinationDirectory.set(destination)
-  }
-  fun typst(action: Action<in SourceDirectorySet>) {
-    action.execute(typst)
-  }
-  val data: SourceDirectorySet = objects.sourceDirectorySet("data", "Data files").apply {
-    include("*.json", "*.yml", "*.yaml", "*.toml")
-    destinationDirectory.set(destination)
-  }
-  fun data(action: Action<in SourceDirectorySet>) {
-    action.execute(data)
-  }
-  val images: SourceDirectorySet = objects.sourceDirectorySet("data", "Data files").apply {
-    include("*.png", "*.jpg", "*.gif", "*.svg")
-    destinationDirectory.set(destination)
-  }
-  fun images(action: Action<in SourceDirectorySet>) {
-    action.execute(images)
-  }
-  val fonts: SourceDirectorySet = objects.sourceDirectorySet("fonts", "Font files").apply {
-    include("*.ttf", "*.ttc", "*.otf", "*.otc")
-    destinationDirectory.set(destination)
-  }
-  fun fonts(action: Action<in SourceDirectorySet>) {
-    action.execute(fonts)
-  }
+abstract class TypstSourceSet @Inject constructor(private val providers: ProviderFactory, private val layout: ProjectLayout) : Named {
+    abstract val destinationDir: DirectoryProperty
+    abstract val documents: ListProperty<RegularFile>
+    abstract val inputs: MapProperty<String, String>
+    abstract val merged: RegularFileProperty
+
+    abstract val typst: SetProperty<Directory>
+    abstract val data: SetProperty<Directory>
+    abstract val images: SetProperty<Directory>
+    abstract val fonts: SetProperty<Directory>
   fun addSourceSet(sourceSet: TypstSourceSet) {
-    typst.srcDirs(sourceSet.typst.sourceDirectories)
-    data.srcDirs(sourceSet.data.sourceDirectories)
-    images.srcDirs(sourceSet.images.sourceDirectories)
-    fonts.srcDirs(sourceSet.fonts.sourceDirectories)
+    typst.addAll(sourceSet.typst)
+    data.addAll(sourceSet.data)
+    images.addAll(sourceSet.images)
+    fonts.addAll(sourceSet.fonts)
   }
   fun addSourceSet(sourceSet: Provider<TypstSourceSet>) {
-    typst.srcDirs(sourceSet.map { it.typst.sourceDirectories })
-    data.srcDirs(sourceSet.map { it.data.sourceDirectories })
-    images.srcDirs(sourceSet.map { it.images.sourceDirectories })
-    fonts.srcDirs(sourceSet.map { it.fonts.sourceDirectories })
+      typst.addAll(sourceSet.flatMap { it.typst })
+      data.addAll(sourceSet.flatMap { it.data })
+      images.addAll(sourceSet.flatMap { it.images })
+      fonts.addAll(sourceSet.flatMap { it.fonts })
   }
   fun useLocalPackages() {
-    typst.srcDir(typstLocalPackages())
+    typst.add(typstLocalPackages())
   }
-  private fun typstLocalPackages(): Directory {
-    val homeDir = layout.projectDirectory.dir(System.getProperty("user.home"))
+  private fun typstLocalPackages(): Provider<Directory> {
     val currentOs = DefaultNativePlatform.getCurrentOperatingSystem()
-    val path = if (currentOs.isMacOsX) {
-      "Library/Application Support"
+    val appDataDir = if (currentOs.isMacOsX) {
+        layout.projectDirectory.dir(providers.systemProperty("user.home")).map { it.dir("Library/Application Support") }
     } else if (currentOs.isLinux) {
-      System.getenv("XDG_DATA_HOME")
+        layout.projectDirectory.dir(providers.environmentVariable("XDG_DATA_HOME"))
     } else {
-      System.getenv("APPDATA")
+        layout.projectDirectory.dir(providers.environmentVariable("APPDATA"))
     }
-    return homeDir.dir(path).dir("typst/packages")
+    return appDataDir.map { it.dir("typst/packages") }
   }
 }
