@@ -8,9 +8,9 @@ import javax.inject.Inject
 
 abstract class TypstSourceSet @Inject constructor(private val providers: ProviderFactory, private val layout: ProjectLayout) : Named {
     abstract val destinationDir: DirectoryProperty
-    abstract val documents: ListProperty<RegularFile>
+    abstract val documents: ListProperty<String>
     abstract val inputs: MapProperty<String, String>
-    abstract val merged: RegularFileProperty
+    abstract val merged: Property<String>
 
     abstract val typst: SetProperty<Directory>
     abstract val data: SetProperty<Directory>
