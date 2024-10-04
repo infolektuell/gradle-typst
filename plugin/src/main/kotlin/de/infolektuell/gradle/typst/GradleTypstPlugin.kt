@@ -34,7 +34,7 @@ class GradleTypstPlugin : Plugin<Project> {
             s.images.add(task.target)
         }
           val typstTask = project.tasks.register("compile${s.name}Typst", TypstCompileTask::class.java) { task ->
-            task.documents.convention(s.documents.map { docs -> docs.map { typstRoot.file(it) } })
+            task.documents.convention(s.documents.map { docs -> docs.map { typstRoot.file("$it.typ") } })
             task.variables.convention(s.inputs)
             task.sources.data.convention(s.data)
             task.sources.fonts.convention(s.fonts)
