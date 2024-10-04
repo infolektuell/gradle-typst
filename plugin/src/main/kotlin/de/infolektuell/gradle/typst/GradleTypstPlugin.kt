@@ -27,13 +27,14 @@ class GradleTypstPlugin : Plugin<Project> {
           s.images.add(imagesRoot)
           s.useLocalPackages()
           s.destinationDir.convention(project.layout.buildDirectory.dir("typst/${s.name}"))
-        project.tasks.register("convert${title}Images", ConvertImagesTask::class.java) { task ->
+        val convertImagesTask = project.tasks.register("convert${title}Images", ConvertImagesTask::class.java) { task ->
+            task.onlyIf { task.source.get().asFile.exists() }
             task.source.convention(imagesRoot)
             task.target.convention(project.layout.buildDirectory.dir("generated/magick/images"))
             task.format.convention("png")
             task.quality.convention(100)
-            s.images.add(task.target)
         }
+          s.images.add(convertImagesTask.flatMap { it.target })
           val typstTask = project.tasks.register("compile${title}Typst", TypstCompileTask::class.java) { task ->
             task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.convention(s.documents.map { docs -> docs.map { typstRoot.file("$it.typ") } })
