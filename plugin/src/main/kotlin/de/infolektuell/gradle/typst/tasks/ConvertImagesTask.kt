@@ -37,7 +37,7 @@ abstract class ConvertImagesTask @Inject constructor(private val fileSystemOpera
     }
 
   @get:Incremental
-  @get:PathSensitive(PathSensitivity.NAME_ONLY)
+  @get:PathSensitive(PathSensitivity.RELATIVE)
   @get:InputDirectory
   abstract val source: DirectoryProperty
   @get:Input
@@ -49,19 +49,26 @@ abstract class ConvertImagesTask @Inject constructor(private val fileSystemOpera
   @TaskAction
   protected fun convert (inputs: InputChanges) {
       val supportedFormats = setOf("png", "jpg", "gif", "svg")
-      val changes = inputs.getFileChanges(source).filter { it.fileType != FileType.DIRECTORY }
-      fileSystemOperations.copy { spec ->
-          spec.from(changes.filter { it.changeType != ChangeType.REMOVED && supportedFormats.contains(it.file.extension) }.map { it.file })
-          spec.into(target)
-      }
-      fileSystemOperations.delete { spec ->
-          spec.delete(changes.filter { it.changeType == ChangeType.REMOVED }.map { target.zip(format) { t, f -> t.file(it.file.nameWithoutExtension + f) } })
-      }
       val queue = executor.noIsolation()
-      changes.filter { it.changeType != ChangeType.REMOVED && !supportedFormats.contains(it.file.extension) }.forEach { change ->
-      val targetFile = target.zip(format) { t, f ->
-          t.file(change.file.nameWithoutExtension + f)
+      inputs.getFileChanges(source).forEach { change ->
+          if (change.fileType == FileType.DIRECTORY) return@forEach
+          val targetFile = target.zip(format) { t, f ->
+          val fileName = change.normalizedPath.replaceAfterLast('.', f)
+              t.file(fileName)
       }
+          if (change.changeType == ChangeType.REMOVED) {
+              fileSystemOperations.delete { spec ->
+                  spec.delete(targetFile)
+              }
+              return@forEach
+          }
+          if (supportedFormats.contains(change.file.extension)) {
+              fileSystemOperations.copy { spec ->
+                  spec.from(change.file)
+                  spec.into(targetFile.get().asFile.parent)
+              }
+              return@forEach
+          }
         queue.submit(MagickAction::class.java) { params ->
           params.source.set(change.file)
           params.target.set(targetFile)

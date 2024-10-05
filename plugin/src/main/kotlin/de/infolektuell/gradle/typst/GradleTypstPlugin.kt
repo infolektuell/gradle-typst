@@ -30,7 +30,7 @@ class GradleTypstPlugin : Plugin<Project> {
         val convertImagesTask = project.tasks.register("convert${title}Images", ConvertImagesTask::class.java) { task ->
             task.onlyIf { task.source.get().asFile.exists() }
             task.source.convention(imagesRoot)
-            task.target.convention(project.layout.buildDirectory.dir("generated/magick/images"))
+            task.target.convention(project.layout.buildDirectory.dir("generated/typst/images"))
             task.format.convention("png")
             task.quality.convention(100)
         }
