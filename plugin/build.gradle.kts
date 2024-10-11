@@ -27,10 +27,6 @@ signing {
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(22)
-    targetCompatibility = JavaVersion.VERSION_21
-}
-kotlin {
-    compilerOptions.jvmTarget = JvmTarget.JVM_21
 }
 
 repositories {
