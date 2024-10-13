@@ -48,6 +48,10 @@ abstract class ConvertImagesTask @Inject constructor(private val fileSystemOpera
   abstract val target: DirectoryProperty
   @TaskAction
   protected fun convert (inputs: InputChanges) {
+      source.get().asFileTree.visit { file ->
+          if (!file.isDirectory) return@visit
+          target.dir(file.relativePath.pathString).get().asFile.mkdirs()
+      }
       val supportedFormats = setOf("png", "jpg", "gif", "svg")
       val queue = executor.noIsolation()
       inputs.getFileChanges(source).forEach { change ->
@@ -69,12 +73,12 @@ abstract class ConvertImagesTask @Inject constructor(private val fileSystemOpera
               }
               return@forEach
           }
-        queue.submit(MagickAction::class.java) { params ->
-          params.source.set(change.file)
-          params.target.set(targetFile)
-          params.format.set(format)
-          params.quality.set(quality)
-        }
+          queue.submit(MagickAction::class.java) { params ->
+              params.source.set(change.file)
+              params.target.set(targetFile)
+              params.format.set(format)
+              params.quality.set(quality)
+          }
     }
   }
 }
