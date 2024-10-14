@@ -1,11 +1,7 @@
 package de.infolektuell.gradle.typst.tasks
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.Directory
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.RegularFile
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.model.ObjectFactory
+import org.gradle.api.file.*
 import org.gradle.api.provider.*
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
@@ -14,7 +10,8 @@ import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import javax.inject.Inject
 
-abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, private val executor: WorkerExecutor) : DefaultTask() {
+@Suppress("LeakingThis")
+abstract class TypstCompileTask @Inject constructor(private val executor: WorkerExecutor) : DefaultTask() {
     interface SourceDirectories {
         @get:InputFiles
         val data: SetProperty<Directory>
@@ -50,11 +47,9 @@ abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, priv
     }
 
     @get:InputDirectory
-    val compiler: DirectoryProperty = objects.directoryProperty()
-    @get:Internal
-    val executable: Provider<String> = compiler.map { it.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath }
+    abstract val compiler: DirectoryProperty
   @get:InputFiles
-  val documents: ListProperty<RegularFile> = objects.listProperty(RegularFile::class.java)
+  abstract val documents: ListProperty<RegularFile>
     @get:Input
     abstract val root: Property<String>
     @get:Input
@@ -62,7 +57,7 @@ abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, priv
     @get:Nested
     abstract val sources: SourceDirectories
     @get:OutputDirectory
-    val destinationDir: DirectoryProperty = objects.directoryProperty()
+    abstract val destinationDir: DirectoryProperty
     @get:OutputFiles
     val compiled: Provider<List<RegularFile>> = documents.zip(destinationDir) { docs, dest ->
         docs.map { dest.file(it.asFile.nameWithoutExtension + ".pdf") }
@@ -70,6 +65,7 @@ abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, priv
 
   @TaskAction
   protected fun compile () {
+      val executable = compiler.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath
     val queue = executor.noIsolation()
     documents.get().forEach { document ->
       queue.submit(TypstAction::class.java) { params ->
