@@ -2,16 +2,42 @@ package de.infolektuell.gradle.typst
 
 import de.infolektuell.gradle.typst.extensions.TypstExtension
 import de.infolektuell.gradle.typst.tasks.ConvertImagesTask
+import de.infolektuell.gradle.typst.tasks.DownloadTask
+import de.infolektuell.gradle.typst.tasks.ExtractTask
 import de.infolektuell.gradle.typst.tasks.MergePDFTask
 import de.infolektuell.gradle.typst.tasks.TypstCompileTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 class GradleTypstPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
-      extension.compiler.convention("typst")
+        extension.version.convention("latest")
+        val currentOs = DefaultNativePlatform.getCurrentOperatingSystem()
+        val currentArch = DefaultNativePlatform.getCurrentArchitecture()
+        val osToken = if (currentOs.isLinux) {
+            "unknown-linux-musl.tar.xz"
+        } else if (currentOs.isMacOsX) {
+            "apple-darwin.tar.xz"
+        } else {
+            "pc-windows-msvc.zip"
+        }
+        val archToken = if (currentArch.isArm) {
+            "aarch64"
+        } else {
+            "x86_64"
+        }
+      val downloadTask = project.tasks.register("downloadTypst", DownloadTask::class.java) { task ->
+          task.url.convention(extension.version.map { v -> project.uri("https://github.com/typst/typst/releases/download/$v/typst-$archToken-$osToken") })
+          task.target.convention(project.layout.buildDirectory.dir("downloads").zip(task.fileName) { dir, file -> dir.file(file) })
+      }
+        val extractTask = project.tasks.register("extractTypst", ExtractTask::class.java) { task ->
+            task.source.convention(downloadTask.flatMap { it.target })
+            task.target.convention(project.layout.buildDirectory.dir("tools/typst"))
+        }
+        extension.compiler.convention(extractTask.map { it.target.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath })
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
         task.compiler.convention(extension.compiler)
           task.root.convention(project.layout.projectDirectory.asFile.absolutePath)

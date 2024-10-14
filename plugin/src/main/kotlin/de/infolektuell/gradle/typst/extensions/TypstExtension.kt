@@ -5,6 +5,7 @@ import org.gradle.api.provider.Property
 
 abstract class TypstExtension {
   abstract val sourceSets: NamedDomainObjectContainer<TypstSourceSet>
+  abstract val version: Property<String>
   abstract val compiler: Property<String>
   companion object {
     const val EXTENSION_NAME = "typst"

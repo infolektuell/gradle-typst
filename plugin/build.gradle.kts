@@ -34,6 +34,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.tukaani:xz:1.10")
     implementation("org.apache.pdfbox:pdfbox:3.0.3")
     // Use the Kotlin JUnit 5 integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
