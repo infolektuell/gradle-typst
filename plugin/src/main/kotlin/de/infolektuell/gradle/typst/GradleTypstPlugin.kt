@@ -1,20 +1,19 @@
 package de.infolektuell.gradle.typst
 
 import de.infolektuell.gradle.typst.extensions.TypstExtension
-import de.infolektuell.gradle.typst.tasks.ConvertImagesTask
-import de.infolektuell.gradle.typst.tasks.DownloadTask
-import de.infolektuell.gradle.typst.tasks.ExtractTask
-import de.infolektuell.gradle.typst.tasks.MergePDFTask
-import de.infolektuell.gradle.typst.tasks.TypstCompileTask
+import de.infolektuell.gradle.typst.providers.GithubLatestRelease
+import de.infolektuell.gradle.typst.tasks.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.provider.Provider
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 class GradleTypstPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
-        extension.version.convention("latest")
+        val latestTypstVersion: Provider<String> = project.providers.provider { GithubLatestRelease.latestGithubRelease("typst", "typst") }
+        extension.version.convention(latestTypstVersion)
         val currentOs = DefaultNativePlatform.getCurrentOperatingSystem()
         val currentArch = DefaultNativePlatform.getCurrentArchitecture()
         val osToken = if (currentOs.isLinux) {
