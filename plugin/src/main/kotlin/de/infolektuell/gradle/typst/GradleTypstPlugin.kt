@@ -36,7 +36,7 @@ class GradleTypstPlugin : Plugin<Project> {
             task.source.convention(downloadTask.flatMap { it.target })
             task.target.convention(project.layout.buildDirectory.dir("tools/typst"))
         }
-        extension.compiler.convention(extractTask.map { it.target.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath })
+        extension.compiler.convention(extractTask.flatMap { it.target })
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
         task.compiler.convention(extension.compiler)
           task.root.convention(project.layout.projectDirectory.asFile.absolutePath)

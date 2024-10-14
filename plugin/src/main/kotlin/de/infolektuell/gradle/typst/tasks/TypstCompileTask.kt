@@ -28,7 +28,7 @@ abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, priv
 
     protected abstract class TypstAction @Inject constructor(private val execOperations: ExecOperations) : WorkAction<TypstAction.Params> {
         interface Params : WorkParameters {
-            val compiler: Property<String>
+            val executable: Property<String>
             val document: RegularFileProperty
             val root: Property<String>
             val variables: MapProperty<String, String>
@@ -38,7 +38,7 @@ abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, priv
 
         override fun execute() {
             execOperations.exec { action ->
-                action.executable(parameters.compiler.get())
+                action.executable(parameters.executable.get())
                 action.args("compile")
                 .args("--root", parameters.root.get())
                 parameters.fontDirectories.get().forEach { action.args("--font-path", it.asFile.absolutePath) }
@@ -49,8 +49,10 @@ abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, priv
         }
     }
 
-    @get:Input
-    abstract val compiler: Property<String>
+    @get:InputDirectory
+    val compiler: DirectoryProperty = objects.directoryProperty()
+    @get:Internal
+    val executable: Provider<String> = compiler.map { it.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath }
   @get:InputFiles
   val documents: ListProperty<RegularFile> = objects.listProperty(RegularFile::class.java)
     @get:Input
@@ -71,7 +73,7 @@ abstract class TypstCompileTask @Inject constructor(objects: ObjectFactory, priv
     val queue = executor.noIsolation()
     documents.get().forEach { document ->
       queue.submit(TypstAction::class.java) { params ->
-          params.compiler.set(compiler)
+          params.executable.set(executable)
         params.document.set(document)
           params.root.set(root)
           params.variables.set(variables)

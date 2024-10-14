@@ -28,7 +28,7 @@ abstract class ExtractTask @Inject constructor(private val fileSystem: FileSyste
                     "zip" -> archives.zipTree(source)
                 else -> archives.tarTree(source)
             }
-            spec.from(tree.matching { it.include("**/typst", "**/typst.exe") }.files)
+            spec.from(tree)
             spec.into(target)
         }
     }
