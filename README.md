@@ -7,12 +7,14 @@ This Gradle plugin offers a way to maintain such projects:
 
 ## Features
 
-- [x] Define multiple source sets in one project, e.g., versions for printing and web publishing
 - [x] Compile multiple documents in parallel for faster builds
-- [x] Can track changes in your local packages directory
+- [x] Incremental build: Edit files and rebuild only affected documents
+- [x] Typst can either be automatically downloaded from GitHub releases, or use a local installation
+- [x] Define multiple source sets in one project to produce variants of your content, e.g., versions for printing and web publishing
+- [x] Track changes in locally installed Typst packages
 - [x] Convert unsupported image formats to format supported by Typst (ImageMagick required)
-- [x] Merge generated PDF files using [PDFBox]
-- [x] Compatible with [Configuration Cache]
+- [x] Merge generated PDF files into one file using [PDFBox]
+- [x] Works well with Gradle's [Configuration Cache] and [Build cache]
 
 ## Requirements
 
@@ -23,53 +25,84 @@ The plugin expects these tools being installed locally:
 
 ## Usage
 
-A source set is a directory in your project under _src_.
-There can be as many of them as you need.
-Every source set tracks changes in the following subdirectories:
+### Plugin setup
+
+After creating a new Gradle project with `gradle init`, the plugin needs to be configured in _build.gradle.kts_:
+
+```gradle kotlin dsl
+plugins {
+    // Good practice to have some standard tasks like clean, assemble, build
+    id("base")
+    // Apply the Typst plugin
+    id("de.infolektuell.typst") version "0.1.0"
+}
+
+// The release tag for the Typst version to be used, defaults to latest stable release on GitHub
+typst.version = "v0.12.0-rc1"
+```
+
+### Adding sources
+
+A source set is a directory in your project under _src_ that may contain subfolders for Typst files, data, images, and fonts.
+The Typst files that should be treated as input documents to be compiled must explicitly be configured.
+There can be one or as many of them as needed, so let's add two of them in _build.gradle.kts_:
+
+```gradle kotlin dsl
+// The source sets container
+typst.sourceSets {
+    // Sources for documents intended for web publishing in src/web folder
+    val web by registering {
+        // The files to compile (without .typ extension)
+        documents = listOf("frontmatter", "main", "appendix", "backmatter")
+        // Setting this creates a merged PDF file from the documents list
+        merged = "thesis-web-$version"
+        // Values set in this map are passed to Typst as --input options
+        inputs.put("version", version.toString())
+    }
+
+    // Sources for documents intended for printing in src/printing folder
+    val printing by registering {
+        documents = listOf("frontmatter", "main", "poster", "appendix", "backmatter")
+    }
+}
+```
+
+In a source set folder, these subfolders are watched for changes:
 
 - _data_: Files in YAML, TOML or JSON format
 - _fonts_: Additional font files for your documents
 - _images_: Image files included in your documents
 - _typst_: Typst files, can be documents or contain declarations for importing
 
-In the _build.gradle.kts_ next to _src_, the plugin must be configured:
+Running `gradlew build` now will compile all documents.
+
+### Shared sources
+
+If multiple source sets have many files in common, they could go into their own source set without documents.
+The source sets using these files can depend on this new shared source set.
 
 ```gradle kotlin dsl
-plugins {
-    // Good to have some standard tasks like clean
-    id("base")
-    // Apply the Typst plugin
-    id("de.infolektuell.typst") version "0.1.0"
-}
-
-// Define your source sets
 typst.sourceSets {
-    // Shared files under src/common/
-    val common by registering {
-        // Do your documents use local packages?
-        useLocalPackages()
+    // Sources used by other source sets in src/shared
+    val shared by registering
+
+    val printing by registering {
+        // Shared sources are also watched when printing documents are compiled
+        addSourceSet(shared)
     }
-
-    // Preview version under src/preview, run gradlew previewTypst to build
-    val preview by registering {
-        // Entry points to be compiled by Typst
-        documents.addAll("frontmatter", "thesis")
-  // You can merge all generated documents into one PDF
-  merged = "thesis-preview"
-  // Track changes in common files
-  addSourceSet(common)
-}
-
-    // Production version under src/production, run gradlew productionTypst to build
-    val production by registering {
-        // Entry points to be compiled by Typst
-        documents.addAll("frontmatter", "thesis", "poster")
-  // Track changes in common files
-  addSourceSet(common)
 }
 ```
 
-Running `gradlew build` compiles all documents.
+### Images
+
+Image files in _src/<source set>/images_ are copied to _build/generated/typst/images_.
+If the format ist not supported by Typst, they are converted to png before copying.
+Typst runs after image processing, so the images can be referenced by their path in Typst files.
+Typst receives the project directory as root (not the root project), so absolute import paths start with _/src/_.
+
+### Fonts
+
+A document receives the fonts subfolders of their source set and added shared source sets as font paths.
 
 ## License
 
@@ -77,5 +110,6 @@ Running `gradlew build` compiles all documents.
 
 [typst]: https://typst.app/
 [configuration cache]: https://docs.gradle.org/current/userguide/configuration_cache.html
+[build cache]: https://docs.gradle.org/current/userguide/build_cache.html
 [imagemagick]: https://imagemagick.org/
 [pdfbox]: https://pdfbox.apache.org/
