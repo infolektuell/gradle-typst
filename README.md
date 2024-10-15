@@ -1,5 +1,7 @@
 # Gradle Typst Plugin
 
+[![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/de.infolektuell.typst)](https://plugins.gradle.org/plugin/de.infolektuell.typst)
+
 [Typst] is a new markup-based typesetting system that is designed to be as powerful as LaTeX while being much easier to learn and use.
 A Typst document can be compiled from a single _.typ_ file, but a complex project can also contain many files, including data, images, and fonts.
 The Typst compiler needs the correct file paths to find everything and compile such projects successfully.
