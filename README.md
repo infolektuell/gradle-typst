@@ -20,8 +20,7 @@ This Gradle plugin offers a way to maintain such projects:
 
 The plugin expects these tools being installed locally:
 
-- [Typst]
-- Optional for image conversion: [ImageMagick]
+- [ImageMagick] for image conversion (Optional)
 
 ## Usage
 
@@ -45,7 +44,10 @@ typst.version = "v0.12.0-rc1"
 
 A source set is a directory in your project under _src_ that may contain subfolders for Typst files, data, images, and fonts.
 The Typst files that should be treated as input documents to be compiled must explicitly be configured.
-There can be one or as many of them as needed, so let's add two of them in _build.gradle.kts_:
+There can be one or as many of them as needed.
+Having multiple source sets can be useful if multiple variants of similar content should be produced, especially for data-driven documents.
+Otherwise, a single source set is sufficient.
+So let's add two of them in _build.gradle.kts_:
 
 ```gradle kotlin dsl
 // The source sets container
