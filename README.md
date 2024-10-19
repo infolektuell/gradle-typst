@@ -35,7 +35,7 @@ plugins {
     // Good practice to have some standard tasks like clean, assemble, build
     id("base")
     // Apply the Typst plugin
-    id("de.infolektuell.typst") version "0.2.0"
+    id("de.infolektuell.typst") version "0.3.0"
 }
 
 // The release tag for the Typst version to be used, defaults to latest stable release on GitHub
@@ -120,6 +120,26 @@ tasks.withType(TypstCompileTask::class) {
 }
 ```
 
+### Creation date
+
+For better build reproducibility, Typst accepts a fixed creation date in UNIX timestamp format.
+See [SOURCE_DATE_EPOCH specification] for a format description.
+If no timestamp is set, it is determined by Typst.
+
+```gradle kotlin dsl
+import de.infolektuell.gradle.typst.providers.GitCommitDateValueSource
+
+// Use the included utility to get a timestamp from git commit
+val timestamp = providers.of(GitCommitDateValueSource::class) {
+    parameters {
+        revision = "main"
+    }
+}
+
+// Configure the Typst extension with this timestamp (eagerly for configuration cache compatibility)
+typst.creationTimestamp = timestamp.get()
+```
+
 ## License
 
 [MIT License](LICENSE.txt)
@@ -129,3 +149,4 @@ tasks.withType(TypstCompileTask::class) {
 [build cache]: https://docs.gradle.org/current/userguide/build_cache.html
 [imagemagick]: https://imagemagick.org/
 [pdfbox]: https://pdfbox.apache.org/
+[SOURCE_DATE_EPOCH specification]: https://reproducible-builds.org/specs/source-date-epoch/
