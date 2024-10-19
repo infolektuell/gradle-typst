@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `TypstCompileTask` now takes creation date as an optional task input, also configurable via extension. See [SOURCE_DATE_EPOCH specification] for more information.
+- Utility value source that queries the date from a git revision as a UNIX timestamp that can be passed to `typst.creationTimestamp` extension property
+
+[SOURCE_DATE_EPOCH specification]: https://reproducible-builds.org/specs/source-date-epoch/
+
 ## [0.2.0] - 2024-10-19
 
 ### Changed
