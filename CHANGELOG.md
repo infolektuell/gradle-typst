@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-10-19
+
 ### Changed
 
-- System fonts are ignored by default. For Typst versions older than 0.12.0 to run successfully, the `useSystemfonts` property of `TypstCompileTask` must be set to `false`.
+- System fonts are ignored by default. For Typst versions older than 0.12.0 to run successfully, the `useSystemFonts` property of `TypstCompileTask` must be set to `true`.
 
 ## [0.1.0] - 2024-10-15
 
@@ -22,5 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DSL extension to configure Typst version and multiple source sets
 - Some auxiliary value sources for git has and latest GitHub release
 
-[unreleased]: https://github.com/infolektuell/gradle-jextract/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/infolektuell/gradle-jextract/releases/tag/v0.1.0
+[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/infolektuell/gradle-typst/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/infolektuell/gradle-typst/releases/tag/v0.1.0

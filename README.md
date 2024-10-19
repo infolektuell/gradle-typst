@@ -35,11 +35,11 @@ plugins {
     // Good practice to have some standard tasks like clean, assemble, build
     id("base")
     // Apply the Typst plugin
-    id("de.infolektuell.typst") version "0.1.0"
+    id("de.infolektuell.typst") version "0.2.0"
 }
 
 // The release tag for the Typst version to be used, defaults to latest stable release on GitHub
-typst.version = "v0.12.0-rc1"
+typst.version = "v0.12.0"
 ```
 
 ### Adding sources
@@ -107,6 +107,18 @@ Typst receives the project directory as root (not the root project), so absolute
 ### Fonts
 
 A document receives the fonts subfolders of their source set and added shared source sets as font paths.
+Since version 0.2.0 of this plugin, system fonts are ignored by default for higher reproducibility.
+If a Typst version below 0.12.0 is in use or if system fonts should be considered, this must be turned off per configuration:
+
+```gradle kotlin dsl
+import de.infolektuell.gradle.typst.tasks.TypstCompileTask
+
+// Configure all typst tasks
+tasks.withType(TypstCompileTask::class) {
+    // Override the convention (false by default)
+    useSystemFonts = true
+}
+```
 
 ## License
 
