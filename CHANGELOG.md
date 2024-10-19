@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- System fonts are ignored by default. For Typst versions older than 0.12.0 to run successfully, the `useSystemfonts` property of `TypstCompileTask` must be set to `false`.
+
 ## [0.1.0] - 2024-10-15
 
 ### Added

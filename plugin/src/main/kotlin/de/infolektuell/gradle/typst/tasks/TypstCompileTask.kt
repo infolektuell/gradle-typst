@@ -30,6 +30,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
             val root: Property<String>
             val variables: MapProperty<String, String>
             val fontDirectories: ListProperty<Directory>
+            val useSystemFonts: Property<Boolean>
             val target: RegularFileProperty
         }
 
@@ -39,6 +40,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
                 action.args("compile")
                 .args("--root", parameters.root.get())
                 parameters.fontDirectories.get().forEach { action.args("--font-path", it.asFile.absolutePath) }
+                parameters.useSystemFonts.get().not().takeIf { it }?.let { action.args("--ignore-system-fonts") }
                 parameters.variables.get().forEach { (k, v) -> action.args("--input", "$k=$v") }
                 action.args(parameters.document.get().asFile.absolutePath)
                 .args(parameters.target.asFile.get().absolutePath)
@@ -54,6 +56,8 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     abstract val root: Property<String>
     @get:Input
     abstract val variables: MapProperty<String, String>
+    @get:Input
+    abstract val useSystemFonts: Property<Boolean>
     @get:Nested
     abstract val sources: SourceDirectories
     @get:OutputDirectory
@@ -74,6 +78,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
           params.root.set(root)
           params.variables.set(variables)
           params.fontDirectories.set(sources.fonts)
+          params.useSystemFonts.set(useSystemFonts)
           params.target.set(destinationDir.file(document.asFile.nameWithoutExtension + ".pdf"))
       }
     }
