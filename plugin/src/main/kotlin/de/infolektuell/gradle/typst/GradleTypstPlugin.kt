@@ -40,6 +40,7 @@ class GradleTypstPlugin : Plugin<Project> {
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
         task.compiler.convention(extension.compiler)
           task.root.convention(project.layout.projectDirectory.asFile.absolutePath)
+          task.creationTimestamp.convention(extension.creationTimestamp)
           task.useSystemFonts.convention(false)
       }
       extension.sourceSets.all { s ->

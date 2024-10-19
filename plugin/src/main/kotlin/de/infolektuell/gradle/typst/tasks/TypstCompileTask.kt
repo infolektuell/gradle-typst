@@ -30,6 +30,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
             val root: Property<String>
             val variables: MapProperty<String, String>
             val fontDirectories: ListProperty<Directory>
+            val creationTimestamp: Property<String>
             val useSystemFonts: Property<Boolean>
             val target: RegularFileProperty
         }
@@ -42,6 +43,9 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
                 parameters.fontDirectories.get().forEach { action.args("--font-path", it.asFile.absolutePath) }
                 parameters.useSystemFonts.get().not().takeIf { it }?.let { action.args("--ignore-system-fonts") }
                 parameters.variables.get().forEach { (k, v) -> action.args("--input", "$k=$v") }
+                if (parameters.creationTimestamp.isPresent) {
+                    action.args("--creation-timestamp", parameters.creationTimestamp.get())
+                }
                 action.args(parameters.document.get().asFile.absolutePath)
                 .args(parameters.target.asFile.get().absolutePath)
             }
@@ -56,6 +60,9 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     abstract val root: Property<String>
     @get:Input
     abstract val variables: MapProperty<String, String>
+    @get:Optional
+    @get:Input
+    abstract val creationTimestamp: Property<String>
     @get:Input
     abstract val useSystemFonts: Property<Boolean>
     @get:Nested
@@ -79,6 +86,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
           params.variables.set(variables)
           params.fontDirectories.set(sources.fonts)
           params.useSystemFonts.set(useSystemFonts)
+          params.creationTimestamp.set(creationTimestamp)
           params.target.set(destinationDir.file(document.asFile.nameWithoutExtension + ".pdf"))
       }
     }
