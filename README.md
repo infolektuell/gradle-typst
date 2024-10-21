@@ -36,7 +36,7 @@ plugins {
     // Good practice to have some standard tasks like clean, assemble, build
     id("base")
     // Apply the Typst plugin
-    id("de.infolektuell.typst") version "0.3.0"
+    id("de.infolektuell.typst") version "0.4.0"
 }
 
 // The release tag for the Typst version to be used, defaults to latest stable release on GitHub
@@ -168,6 +168,26 @@ val timestamp = providers.of(GitCommitDateValueSource::class) {
 
 // Configure the Typst extension with this timestamp (eagerly for configuration cache compatibility)
 typst.creationTimestamp = timestamp.get()
+```
+
+### Local packages
+
+Typst 0.12.0 added a CLI option to pass the path where local packages are stored.
+This plugin sets this explicitly to Typst's platform-dependent convention, so both are working with the same files.
+To use an older version of Typst, you have to opt-out of this behavior.
+
+```gradle kotlin dsl
+import de.infolektuell.gradle.typst.tasks.TypstCompileTask
+
+// Configure all typst tasks
+tasks.withType(TypstCompileTask::class) {
+    // Unset the package path
+    packagePath.unset()
+    // Optionally add the local packages folder from the typst extension to the source set to keep change tracking
+    sourceSets.register("main") {
+        typst.add(localPackages)
+    }
+}
 ```
 
 ## License

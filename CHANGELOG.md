@@ -7,15 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2024-10-21
+
 ### Added
 
 - `localPackages` property in `TypstExtension` which is configured with a platform-dependent convention where local Typst packages are installed.
 - `packagePath` can be set for `TypstCompileTask` which lets Gradle track changes in local package files and Typst to look for packages in the given directory. This is configured with `localPackages` from the Typst extension by default.
-- Typst source set got a format section where the output formats supported by Typst can be enabled and configured. So the documents of a source set can be output in multiple formats at once.
+- Support for generating documents of a source set in multiple output formats (PDF, PNG, and SVG).
 
 ### Changed
 
-- `TypstSourceSet.merged` was moved to `TypstSourceSet.format.pdf.merged`.
+- `TypstSourceSet.merged` was moved to PDF output configuration.
+- Tracking files in local packages and passing to Typst CLI is opt-out now and must be disabled for older Typst versions
 
 ### Removed
 
@@ -47,7 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DSL extension to configure Typst version and multiple source sets
 - Some auxiliary value sources for git has and latest GitHub release
 
-[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.3.0...HEAD
+[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/infolektuell/gradle-typst/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/infolektuell/gradle-typst/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/infolektuell/gradle-typst/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/infolektuell/gradle-typst/releases/tag/v0.1.0
