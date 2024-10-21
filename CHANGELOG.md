@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `localPackages` property in `TypstExtension` which is configured with a platform-dependent convention where local Typst packages are installed.
+- `packagePath` can be set for `TypstCompileTask` which lets Gradle track changes in local package files and Typst to look for packages in the given directory. This is configured with `localPackages` from the Typst extension by default.
+
+### Removed
+
+- `useLocalPackages` function in `TypstSourceSet`
+
 ## [0.3.0] - 2024-10-19
 
 ### Added

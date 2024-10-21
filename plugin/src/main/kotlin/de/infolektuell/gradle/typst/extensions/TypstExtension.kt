@@ -9,6 +9,7 @@ abstract class TypstExtension {
   abstract val version: Property<String>
     abstract val creationTimestamp: Property<String>
   abstract val compiler: DirectoryProperty
+  abstract val localPackages: DirectoryProperty
   companion object {
     const val EXTENSION_NAME = "typst"
   }

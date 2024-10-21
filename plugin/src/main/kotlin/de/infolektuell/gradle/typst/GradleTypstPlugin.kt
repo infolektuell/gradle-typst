@@ -37,8 +37,17 @@ class GradleTypstPlugin : Plugin<Project> {
             task.target.convention(project.layout.buildDirectory.dir("tools/typst"))
         }
         extension.compiler.convention(extractTask.flatMap { it.target })
+        val appDataDir = if (currentOs.isMacOsX) {
+            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir("Library/Application Support") }
+        } else if (currentOs.isLinux) {
+            project.layout.projectDirectory.dir(project.providers.environmentVariable("XDG_DATA_HOME"))
+        } else {
+            project.layout.projectDirectory.dir(project.providers.environmentVariable("APPDATA"))
+        }
+        extension.localPackages.convention(appDataDir.map { it.dir("typst/packages") })
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
         task.compiler.convention(extension.compiler)
+          task.packagePath.set(extension.localPackages)
           task.root.convention(project.layout.projectDirectory.asFile.absolutePath)
           task.creationTimestamp.convention(extension.creationTimestamp)
           task.useSystemFonts.convention(false)
@@ -52,7 +61,6 @@ class GradleTypstPlugin : Plugin<Project> {
           s.data.add(sourceRoot.dir("data"))
           s.fonts.add(sourceRoot.dir("fonts"))
           s.images.add(imagesRoot)
-          s.useLocalPackages()
           s.destinationDir.convention(project.layout.buildDirectory.dir("typst/${s.name}"))
         val convertImagesTask = project.tasks.register("convert${title}Images", ConvertImagesTask::class.java) { task ->
             task.onlyIf { task.source.get().asFile.exists() }

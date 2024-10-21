@@ -26,6 +26,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     protected abstract class TypstAction @Inject constructor(private val execOperations: ExecOperations) : WorkAction<TypstAction.Params> {
         interface Params : WorkParameters {
             val executable: Property<String>
+            val packagePath: DirectoryProperty
             val document: RegularFileProperty
             val root: Property<String>
             val variables: MapProperty<String, String>
@@ -43,9 +44,8 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
                 parameters.fontDirectories.get().forEach { action.args("--font-path", it.asFile.absolutePath) }
                 parameters.useSystemFonts.get().not().takeIf { it }?.let { action.args("--ignore-system-fonts") }
                 parameters.variables.get().forEach { (k, v) -> action.args("--input", "$k=$v") }
-                if (parameters.creationTimestamp.isPresent) {
-                    action.args("--creation-timestamp", parameters.creationTimestamp.get())
-                }
+                if (parameters.creationTimestamp.isPresent) action.args("--creation-timestamp", parameters.creationTimestamp.get())
+                if (parameters.packagePath.isPresent) action.args("--package-path", parameters.packagePath.asFile.get().absolutePath)
                 action.args(parameters.document.get().asFile.absolutePath)
                 .args(parameters.target.asFile.get().absolutePath)
             }
@@ -54,6 +54,9 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
 
     @get:InputDirectory
     abstract val compiler: DirectoryProperty
+    @get:Optional
+    @get:InputDirectory
+    abstract val packagePath: DirectoryProperty
   @get:InputFiles
   abstract val documents: ListProperty<RegularFile>
     @get:Input
@@ -81,6 +84,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     documents.get().forEach { document ->
       queue.submit(TypstAction::class.java) { params ->
           params.executable.set(executable)
+          params.packagePath.set(packagePath)
         params.document.set(document)
           params.root.set(root)
           params.variables.set(variables)
