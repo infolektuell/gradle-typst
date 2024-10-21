@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `localPackages` property in `TypstExtension` which is configured with a platform-dependent convention where local Typst packages are installed.
 - `packagePath` can be set for `TypstCompileTask` which lets Gradle track changes in local package files and Typst to look for packages in the given directory. This is configured with `localPackages` from the Typst extension by default.
+- Typst source set got a format section where the output formats supported by Typst can be enabled and configured. So the documents of a source set can be output in multiple formats at once.
+
+### Changed
+
+- `TypstSourceSet.merged` was moved to `TypstSourceSet.format.pdf.merged`.
 
 ### Removed
 

@@ -33,6 +33,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
             val fontDirectories: ListProperty<Directory>
             val creationTimestamp: Property<String>
             val useSystemFonts: Property<Boolean>
+            val ppi: Property<Int>
             val target: RegularFileProperty
         }
 
@@ -46,6 +47,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
                 parameters.variables.get().forEach { (k, v) -> action.args("--input", "$k=$v") }
                 if (parameters.creationTimestamp.isPresent) action.args("--creation-timestamp", parameters.creationTimestamp.get())
                 if (parameters.packagePath.isPresent) action.args("--package-path", parameters.packagePath.asFile.get().absolutePath)
+                if (parameters.ppi.isPresent) action.args("--ppi", parameters.ppi.get().toString())
                 action.args(parameters.document.get().asFile.absolutePath)
                 .args(parameters.target.asFile.get().absolutePath)
             }
@@ -59,6 +61,8 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     abstract val packagePath: DirectoryProperty
   @get:InputFiles
   abstract val documents: ListProperty<RegularFile>
+  @get:Input
+  abstract val targetFilenames: ListProperty<String>
     @get:Input
     abstract val root: Property<String>
     @get:Input
@@ -66,6 +70,9 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     @get:Optional
     @get:Input
     abstract val creationTimestamp: Property<String>
+    @get:Optional
+    @get:Input
+    abstract val ppi: Property<Int>
     @get:Input
     abstract val useSystemFonts: Property<Boolean>
     @get:Nested
@@ -73,26 +80,25 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     @get:OutputDirectory
     abstract val destinationDir: DirectoryProperty
     @get:OutputFiles
-    val compiled: Provider<List<RegularFile>> = documents.zip(destinationDir) { docs, dest ->
-        docs.map { dest.file(it.asFile.nameWithoutExtension + ".pdf") }
-    }
+    val compiled: Provider<List<RegularFile>> = targetFilenames.zip(destinationDir) { docs, dir -> docs.map { dir.file(it) } }
 
   @TaskAction
   protected fun compile () {
       val executable = compiler.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath
     val queue = executor.noIsolation()
-    documents.get().forEach { document ->
-      queue.submit(TypstAction::class.java) { params ->
-          params.executable.set(executable)
-          params.packagePath.set(packagePath)
-        params.document.set(document)
-          params.root.set(root)
-          params.variables.set(variables)
-          params.fontDirectories.set(sources.fonts)
-          params.useSystemFonts.set(useSystemFonts)
-          params.creationTimestamp.set(creationTimestamp)
-          params.target.set(destinationDir.file(document.asFile.nameWithoutExtension + ".pdf"))
+      documents.get().zip(compiled.get()) { document, targetFile ->
+          queue.submit(TypstAction::class.java) { params ->
+              params.executable.set(executable)
+              params.packagePath.set(packagePath)
+              params.document.set(document)
+              params.root.set(root)
+              params.variables.set(variables)
+              params.fontDirectories.set(sources.fonts)
+              params.useSystemFonts.set(useSystemFonts)
+              params.creationTimestamp.set(creationTimestamp)
+              params.ppi.set(ppi)
+              params.target.set(targetFile)
+          }
       }
-    }
   }
 }

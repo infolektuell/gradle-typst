@@ -1,5 +1,5 @@
-#let gitHash = sys.inputs.at("gitHash")
+#let gitHash = sys.inputs.at("gitHash", default: "")
 
 = Test document #gitHash
 
-#lorem(50)
+#lorem(5000)

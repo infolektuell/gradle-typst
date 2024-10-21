@@ -26,6 +26,14 @@ typst {
         create("main") {
             documents.add("document")
             inputs.put("gitHash", project.version.toString())
+            format {
+                pdf.enabled = true
+                svg.enabled = true
+                png {
+                    enabled = true
+                    ppi = 72
+                }
+            }
         }
     }
     creationTimestamp = timestamp.get()

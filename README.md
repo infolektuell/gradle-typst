@@ -10,6 +10,7 @@ This Gradle plugin offers a way to maintain such projects:
 ## Features
 
 - [x] Compile multiple documents in parallel for faster builds
+- [x] Generate all output formats supported by Typst (PDF, PNG, and SVG)
 - [x] Incremental build: Edit files and rebuild only affected documents
 - [x] Typst can either be automatically downloaded from GitHub releases, or use a local installation
 - [x] Define multiple source sets in one project to produce variants of your content, e.g., versions for printing and web publishing
@@ -58,8 +59,6 @@ typst.sourceSets {
     val web by registering {
         // The files to compile (without .typ extension)
         documents = listOf("frontmatter", "main", "appendix", "backmatter")
-        // Setting this creates a merged PDF file from the documents list
-        merged = "thesis-web-$version"
         // Values set in this map are passed to Typst as --input options
         inputs.put("version", version.toString())
     }
@@ -78,7 +77,7 @@ In a source set folder, these subfolders are watched for changes:
 - _images_: Image files included in your documents
 - _typst_: Typst files, can be documents or contain declarations for importing
 
-Running `gradlew build` now will compile all documents.
+Running `gradlew build` now will compile all documents into _build/typst/<source set>/_.
 
 ### Shared sources
 
@@ -93,6 +92,37 @@ typst.sourceSets {
     val printing by registering {
         // Shared sources are also watched when printing documents are compiled
         addSourceSet(shared)
+    }
+}
+```
+
+### Output formats
+
+Currently, Typst can output a document as PDF or as a series of images in PNG or SVG format.
+The desired output options can be configured per source set, e.g., PDF for printing and PNG for web publishing.
+
+```gradle kotlin dsl
+typst.sourceSets {
+    val web by registering {
+        documents = listOf("frontmatter", "main", "appendix", "backmatter")
+        format {
+            // The PNG format is right
+            png {
+                enabled = true
+                // Customized resolution (144 by default)
+                ppi = 72
+            }
+            // Disable the PDF format which is active by default
+            pdf.enabled = false
+        }
+    }
+
+    val printing by registering {
+        documents = listOf("frontmatter", "main", "poster", "appendix", "backmatter")
+        format {
+            // Setting this creates a merged PDF file from the documents list
+            pdf.merged = "thesis-$version"
+        }
     }
 }
 ```

@@ -45,6 +45,12 @@ class GradleTypstPlugin : Plugin<Project> {
             project.layout.projectDirectory.dir(project.providers.environmentVariable("APPDATA"))
         }
         extension.localPackages.convention(appDataDir.map { it.dir("typst/packages") })
+        extension.sourceSets.configureEach { s ->
+            s.format.pdf.enabled.convention(true)
+            s.format.png.enabled.convention(false)
+            s.format.png.ppi.convention(144)
+            s.format.svg.enabled.convention(false)
+        }
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
         task.compiler.convention(extension.compiler)
           task.packagePath.set(extension.localPackages)
@@ -70,20 +76,51 @@ class GradleTypstPlugin : Plugin<Project> {
             task.quality.convention(100)
         }
           s.images.add(convertImagesTask.flatMap { it.target })
-          val typstTask = project.tasks.register("compile${title}Typst", TypstCompileTask::class.java) { task ->
-            task.onlyIf { s.documents.get().isNotEmpty() }
-              task.documents.convention(s.documents.map { docs -> docs.map { typstRoot.file("$it.typ") } })
-            task.variables.convention(s.inputs)
-            task.sources.data.convention(s.data)
-            task.sources.fonts.convention(s.fonts)
-            task.sources.images.convention(s.images)
-          task.sources.typst.convention(s.typst)
-            task.destinationDir.convention(s.destinationDir)
-        }
+          val documentFilesProvider = s.documents.map { docs -> docs.map { typstRoot.file("$it.typ") } }
+          val typstTask = project.tasks.register("compile${title}TypstPdf", TypstCompileTask::class.java) { task ->
+              val format = s.format.pdf
+              task.onlyIf { format.enabled.get() }
+              task.onlyIf { s.documents.get().isNotEmpty() }
+              task.documents.convention(documentFilesProvider)
+              task.targetFilenames.convention(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
+              task.variables.convention(s.inputs)
+              task.sources.data.convention(s.data)
+              task.sources.fonts.convention(s.fonts)
+              task.sources.images.convention(s.images)
+              task.sources.typst.convention(s.typst)
+              task.destinationDir.convention(s.destinationDir.dir("pdf"))
+          }
           project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
-              task.onlyIf { s.merged.isPresent }
+              task.onlyIf { s.format.pdf.merged.isPresent }
               task.documents.convention(typstTask.flatMap { it.compiled })
-              task.merged.convention(s.merged.zip(s.destinationDir) { name, dir -> dir.file("$name.pdf") })
+              task.merged.convention(s.format.pdf.merged.zip(s.destinationDir) { name, dir -> dir.file("$name.pdf") })
+          }
+          project.tasks.register("compile${title}TypstPng", TypstCompileTask::class.java) { task ->
+              val format = s.format.png
+              task.onlyIf { format.enabled.get() }
+              task.onlyIf { s.documents.get().isNotEmpty() }
+              task.documents.convention(documentFilesProvider)
+              task.targetFilenames.convention(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
+              task.ppi.convention(format.ppi)
+              task.variables.convention(s.inputs)
+              task.sources.data.convention(s.data)
+              task.sources.fonts.convention(s.fonts)
+              task.sources.images.convention(s.images)
+              task.sources.typst.convention(s.typst)
+              task.destinationDir.convention(s.destinationDir.dir("png"))
+          }
+          project.tasks.register("compile${title}TypstSvg", TypstCompileTask::class.java) { task ->
+              val format = s.format.svg
+              task.onlyIf { format.enabled.get() }
+              task.onlyIf { s.documents.get().isNotEmpty() }
+              task.documents.convention(documentFilesProvider)
+              task.targetFilenames.convention(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
+              task.variables.convention(s.inputs)
+              task.sources.data.convention(s.data)
+              task.sources.fonts.convention(s.fonts)
+              task.sources.images.convention(s.images)
+              task.sources.typst.convention(s.typst)
+              task.destinationDir.convention(s.destinationDir.dir("svg"))
           }
       }
         val typstCompileTask = project.tasks.register("compileTypst") { task ->
