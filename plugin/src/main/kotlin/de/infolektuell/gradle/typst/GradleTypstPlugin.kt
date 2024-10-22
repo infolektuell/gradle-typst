@@ -40,14 +40,14 @@ class GradleTypstPlugin : Plugin<Project> {
         val dataDir = if (currentOs.isMacOsX) {
             project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir("Library/Application Support") }
         } else if (currentOs.isLinux) {
-            project.layout.projectDirectory.dir(project.providers.environmentVariable("XDG_DATA_HOME"))
+            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir(".local/share") }
         } else {
             project.layout.projectDirectory.dir(project.providers.environmentVariable("APPDATA"))
         }
         val cacheDir = if (currentOs.isMacOsX) {
             project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir("Library/Caches") }
         } else if (currentOs.isLinux) {
-            project.layout.projectDirectory.dir(project.providers.environmentVariable("XDG_CACHE_HOME"))
+            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir(".cache") }
         } else {
             project.layout.projectDirectory.dir(project.providers.environmentVariable("LOCALAPPDATA"))
         }
