@@ -7,18 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4.0] - 2024-10-21
+## [0.4.0] - 2024-10-22
 
 ### Added
 
-- `localPackages` property in `TypstExtension` which is configured with a platform-dependent convention where local Typst packages are installed.
-- `packagePath` can be set for `TypstCompileTask` which lets Gradle track changes in local package files and Typst to look for packages in the given directory. This is configured with `localPackages` from the Typst extension by default.
 - Support for generating documents of a source set in multiple output formats (PDF, PNG, and SVG).
+- Target file names in Typst tasks became a task input.
+- Typst tasks have optional `packagePath` and `packageCachePath` inputs. The plugin tries to set them if possible.
+- `localPackages` property in `TypstExtension` which is configured with a platform-dependent convention where local Typst packages are installed.
 
 ### Changed
 
 - `TypstSourceSet.merged` was moved to PDF output configuration.
-- Tracking files in local packages and passing to Typst CLI is opt-out now and must be disabled for older Typst versions
+- Tracking files in local packages and passing to Typst CLI is opt-out now and must be disabled for older Typst versions. Package directory is tracked in Gradle only if it exists.
 
 ### Removed
 
