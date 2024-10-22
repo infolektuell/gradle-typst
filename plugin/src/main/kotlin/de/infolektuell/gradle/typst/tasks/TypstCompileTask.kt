@@ -27,6 +27,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
         interface Params : WorkParameters {
             val executable: Property<String>
             val packagePath: DirectoryProperty
+            val packageCachePath: Property<String>
             val document: RegularFileProperty
             val root: Property<String>
             val variables: MapProperty<String, String>
@@ -47,6 +48,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
                 parameters.variables.get().forEach { (k, v) -> action.args("--input", "$k=$v") }
                 if (parameters.creationTimestamp.isPresent) action.args("--creation-timestamp", parameters.creationTimestamp.get())
                 if (parameters.packagePath.isPresent) action.args("--package-path", parameters.packagePath.asFile.get().absolutePath)
+                if (parameters.packageCachePath.isPresent) action.args("--package-cache-path", parameters.packageCachePath.get())
                 if (parameters.ppi.isPresent) action.args("--ppi", parameters.ppi.get().toString())
                 action.args(parameters.document.get().asFile.absolutePath)
                 .args(parameters.target.asFile.get().absolutePath)
@@ -59,6 +61,9 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     @get:Optional
     @get:InputDirectory
     abstract val packagePath: DirectoryProperty
+    @get:Optional
+    @get:Input
+    abstract val packageCachePath: Property<String>
   @get:InputFiles
   abstract val documents: ListProperty<RegularFile>
   @get:Input
@@ -90,6 +95,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
           queue.submit(TypstAction::class.java) { params ->
               params.executable.set(executable)
               params.packagePath.set(packagePath)
+              params.packageCachePath.set(packageCachePath)
               params.document.set(document)
               params.root.set(root)
               params.variables.set(variables)

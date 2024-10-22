@@ -37,14 +37,23 @@ class GradleTypstPlugin : Plugin<Project> {
             task.target.convention(project.layout.buildDirectory.dir("tools/typst"))
         }
         extension.compiler.convention(extractTask.flatMap { it.target })
-        val appDataDir = if (currentOs.isMacOsX) {
+        val dataDir = if (currentOs.isMacOsX) {
             project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir("Library/Application Support") }
         } else if (currentOs.isLinux) {
             project.layout.projectDirectory.dir(project.providers.environmentVariable("XDG_DATA_HOME"))
         } else {
             project.layout.projectDirectory.dir(project.providers.environmentVariable("APPDATA"))
         }
-        extension.localPackages.convention(appDataDir.map { it.dir("typst/packages") })
+        val cacheDir = if (currentOs.isMacOsX) {
+            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir("Library/Caches") }
+        } else if (currentOs.isLinux) {
+            project.layout.projectDirectory.dir(project.providers.environmentVariable("XDG_CACHE_HOME"))
+        } else {
+            project.layout.projectDirectory.dir(project.providers.environmentVariable("LOCALAPPDATA"))
+        }
+        val packagePath = dataDir.map { it.dir("typst/packages") }
+        val packageCachePath = cacheDir.map { it.dir("typst/packages") }
+        if (packagePath.get().asFile.exists()) extension.localPackages.convention(packagePath)
         extension.sourceSets.configureEach { s ->
             s.format.pdf.enabled.convention(true)
             s.format.png.enabled.convention(false)
@@ -54,6 +63,7 @@ class GradleTypstPlugin : Plugin<Project> {
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
         task.compiler.convention(extension.compiler)
           task.packagePath.set(extension.localPackages)
+          task.packageCachePath.set(packageCachePath.get().asFile.absolutePath)
           task.root.convention(project.layout.projectDirectory.asFile.absolutePath)
           task.creationTimestamp.convention(extension.creationTimestamp)
           task.useSystemFonts.convention(false)
