@@ -91,9 +91,9 @@ class GradleTypstPlugin : Plugin<Project> {
               val format = s.format.pdf
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
-              task.documents.convention(documentFilesProvider)
-              task.targetFilenames.convention(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
-              task.variables.convention(s.inputs)
+              task.documents.set(documentFilesProvider)
+              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
+              task.variables.set(s.inputs)
               task.sources.data.convention(s.data)
               task.sources.fonts.convention(s.fonts)
               task.sources.images.convention(s.images)
@@ -102,17 +102,17 @@ class GradleTypstPlugin : Plugin<Project> {
           }
           project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
               task.onlyIf { s.format.pdf.merged.isPresent }
-              task.documents.convention(typstTask.flatMap { it.compiled })
+              task.documents.set(typstTask.flatMap { it.compiled })
               task.merged.convention(s.format.pdf.merged.zip(s.destinationDir) { name, dir -> dir.file("$name.pdf") })
           }
           project.tasks.register("compile${title}TypstPng", TypstCompileTask::class.java) { task ->
               val format = s.format.png
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
-              task.documents.convention(documentFilesProvider)
-              task.targetFilenames.convention(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
+              task.documents.set(documentFilesProvider)
+              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
               task.ppi.convention(format.ppi)
-              task.variables.convention(s.inputs)
+              task.variables.set(s.inputs)
               task.sources.data.convention(s.data)
               task.sources.fonts.convention(s.fonts)
               task.sources.images.convention(s.images)
@@ -123,9 +123,9 @@ class GradleTypstPlugin : Plugin<Project> {
               val format = s.format.svg
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
-              task.documents.convention(documentFilesProvider)
-              task.targetFilenames.convention(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
-              task.variables.convention(s.inputs)
+              task.documents.set(documentFilesProvider)
+              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
+              task.variables.set(s.inputs)
               task.sources.data.convention(s.data)
               task.sources.fonts.convention(s.fonts)
               task.sources.images.convention(s.images)

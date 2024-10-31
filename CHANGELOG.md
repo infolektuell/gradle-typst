@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- If a task input or output is a collection property (list/map/set), additional items can be manually added during configuration instead of just replacing the convention.
+
 ## [0.4.0] - 2024-10-22
 
 ### Added
