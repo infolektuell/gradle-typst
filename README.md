@@ -18,11 +18,13 @@ This Gradle plugin offers a way to maintain such projects:
 - [x] Convert unsupported image formats to format supported by Typst (ImageMagick required)
 - [x] Merge generated PDF files into one file using [PDFBox]
 - [x] Works well with Gradle's [Configuration Cache] and [Build cache]
+- [x] Runs on JVM 17 and above
 
 ## Requirements
 
 The plugin expects these tools being installed locally:
 
+- Java 17 or above
 - [ImageMagick] for image conversion (Optional)
 
 ## Usage
@@ -36,7 +38,7 @@ plugins {
     // Good practice to have some standard tasks like clean, assemble, build
     id("base")
     // Apply the Typst plugin
-    id("de.infolektuell.typst") version "0.4.1"
+    id("de.infolektuell.typst") version "0.4.2"
 }
 
 // The release tag for the Typst version to be used, defaults to latest stable release on GitHub

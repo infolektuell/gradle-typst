@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2025-01-09
+
+### Fixed
+
+- The plugin now requires at least JVM 17 to run instead of JVM 22. This solves some compatibility problems when the JVM running Gradle cannot be upgraded.
+
 ## [0.4.1] - 2024-10-31
 
 ### Fixed
@@ -57,7 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DSL extension to configure Typst version and multiple source sets
 - Some auxiliary value sources for git has and latest GitHub release
 
-[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.4.1...HEAD
+[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/infolektuell/gradle-typst/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/infolektuell/gradle-typst/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/infolektuell/gradle-typst/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/infolektuell/gradle-typst/compare/v0.2.0...v0.3.0
