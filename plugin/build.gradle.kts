@@ -24,7 +24,7 @@ signing {
 }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(22)
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
 }
 
 repositories {
