@@ -38,7 +38,7 @@ plugins {
     // Good practice to have some standard tasks like clean, assemble, build
     id("base")
     // Apply the Typst plugin
-    id("de.infolektuell.typst") version "0.4.2"
+    id("de.infolektuell.typst") version "0.5.0"
 }
 
 // The release tag for the Typst version to be used, defaults to latest stable release on GitHub
