@@ -124,6 +124,8 @@ typst.sourceSets {
         format {
             // Setting this creates a merged PDF file from the documents list
             pdf.merged = "thesis-$version"
+            // Typst can produce PDF which is compliant to 1.7, a-2b, or a-3b
+            pdf.standard = "a-3b"
         }
     }
 }
