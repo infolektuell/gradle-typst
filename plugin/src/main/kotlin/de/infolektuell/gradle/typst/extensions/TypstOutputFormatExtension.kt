@@ -11,6 +11,8 @@ abstract class TypstOutputFormatExtension {
     abstract class PDF : OutputFormat() {
         val extension: String get() = "pdf"
         abstract val merged: Property<String>
+        // 1.7, a-2b, or a-3b
+        abstract val standard: Property<String>
     }
     abstract class PNG : OutputFormat() {
         val extension: String get() = "png"

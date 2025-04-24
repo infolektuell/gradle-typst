@@ -35,6 +35,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
             val creationTimestamp: Property<String>
             val useSystemFonts: Property<Boolean>
             val ppi: Property<Int>
+            val pdfStandard: Property<String>
             val target: RegularFileProperty
         }
 
@@ -50,6 +51,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
                 if (parameters.packagePath.isPresent) action.args("--package-path", parameters.packagePath.asFile.get().absolutePath)
                 if (parameters.packageCachePath.isPresent) action.args("--package-cache-path", parameters.packageCachePath.get())
                 if (parameters.ppi.isPresent) action.args("--ppi", parameters.ppi.get().toString())
+                if (parameters.pdfStandard.isPresent) action.args("--pdf-standard", parameters.pdfStandard.get())
                 action.args(parameters.document.get().asFile.absolutePath)
                 .args(parameters.target.asFile.get().absolutePath)
             }
@@ -78,6 +80,9 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     @get:Optional
     @get:Input
     abstract val ppi: Property<Int>
+    @get:Optional
+    @get:Input
+    abstract val pdfStandard: Property<String>
     @get:Input
     abstract val useSystemFonts: Property<Boolean>
     @get:Nested
@@ -103,6 +108,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
               params.useSystemFonts.set(useSystemFonts)
               params.creationTimestamp.set(creationTimestamp)
               params.ppi.set(ppi)
+              params.pdfStandard.set(pdfStandard)
               params.target.set(targetFile)
           }
       }

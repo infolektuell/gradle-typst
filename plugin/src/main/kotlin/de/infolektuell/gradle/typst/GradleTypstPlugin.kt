@@ -93,6 +93,7 @@ class GradleTypstPlugin : Plugin<Project> {
               task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.set(documentFilesProvider)
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
+              task.pdfStandard.set(format.standard)
               task.variables.set(s.inputs)
               task.sources.data.convention(s.data)
               task.sources.fonts.convention(s.fonts)
