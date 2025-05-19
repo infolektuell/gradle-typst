@@ -1,59 +1,29 @@
 package de.infolektuell.gradle.typst
 
 import de.infolektuell.gradle.typst.extensions.TypstExtension
-import de.infolektuell.gradle.typst.providers.GithubLatestRelease
+import de.infolektuell.gradle.typst.service.GithubClient
+import de.infolektuell.gradle.typst.service.TypstDataStore
 import de.infolektuell.gradle.typst.tasks.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
-import org.gradle.api.provider.Provider
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 class GradleTypstPlugin : Plugin<Project> {
     override fun apply(project: Project) {
+        val store = TypstDataStore()
         val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
-        val latestTypstVersion: Provider<String> = project.providers.provider { GithubLatestRelease.latestGithubRelease("typst", "typst") }
-        extension.version.convention(latestTypstVersion)
-        val currentOs = DefaultNativePlatform.getCurrentOperatingSystem()
-        val currentArch = DefaultNativePlatform.getCurrentArchitecture()
-        val osToken = if (currentOs.isLinux) {
-            "unknown-linux-musl.tar.xz"
-        } else if (currentOs.isMacOsX) {
-            "apple-darwin.tar.xz"
-        } else {
-            "pc-windows-msvc.zip"
-        }
-        val archToken = if (currentArch.isArm) {
-            "aarch64"
-        } else {
-            "x86_64"
-        }
+        extension.version.convention(project.providers.provider { GithubClient().findLatestTag("typst", "typst") })
+        val assetProvider = extension.version.map { store.asset(it) }
       val downloadTask = project.tasks.register("downloadTypst", DownloadTask::class.java) { task ->
-          task.url.convention(extension.version.map { v -> project.uri("https://github.com/typst/typst/releases/download/$v/typst-$archToken-$osToken") })
-          task.target.convention(project.layout.buildDirectory.dir("downloads").zip(task.fileName) { dir, file -> dir.file(file) })
+          task.asset.convention(assetProvider)
+          task.target.convention(assetProvider.flatMap { project.layout.buildDirectory.file("downloads/${it.filename}") })
       }
         val extractTask = project.tasks.register("extractTypst", ExtractTask::class.java) { task ->
             task.source.convention(downloadTask.flatMap { it.target })
             task.target.convention(project.layout.buildDirectory.dir("tools/typst"))
         }
         extension.compiler.convention(extractTask.flatMap { it.target })
-        val dataDir = if (currentOs.isMacOsX) {
-            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir("Library/Application Support") }
-        } else if (currentOs.isLinux) {
-            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir(".local/share") }
-        } else {
-            project.layout.projectDirectory.dir(project.providers.environmentVariable("APPDATA"))
-        }
-        val cacheDir = if (currentOs.isMacOsX) {
-            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir("Library/Caches") }
-        } else if (currentOs.isLinux) {
-            project.layout.projectDirectory.dir(project.providers.systemProperty("user.home")).map { it.dir(".cache") }
-        } else {
-            project.layout.projectDirectory.dir(project.providers.environmentVariable("LOCALAPPDATA"))
-        }
-        val packagePath = dataDir.map { it.dir("typst/packages") }
-        val packageCachePath = cacheDir.map { it.dir("typst/packages") }
-        if (packagePath.get().asFile.exists()) extension.localPackages.convention(packagePath)
+        if (store.hasPackages) extension.localPackages.convention(project.layout.projectDirectory.dir(store.packageDir.toString()))
         extension.sourceSets.configureEach { s ->
             s.format.pdf.enabled.convention(true)
             s.format.png.enabled.convention(false)
@@ -63,7 +33,7 @@ class GradleTypstPlugin : Plugin<Project> {
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
         task.compiler.convention(extension.compiler)
           task.packagePath.set(extension.localPackages)
-          task.packageCachePath.set(packageCachePath.get().asFile.absolutePath)
+          task.packageCachePath.set(store.packageCacheDir.toString())
           task.root.convention(project.layout.projectDirectory.asFile.absolutePath)
           task.creationTimestamp.convention(extension.creationTimestamp)
           task.useSystemFonts.convention(false)

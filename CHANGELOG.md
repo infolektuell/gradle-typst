@@ -7,11 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A separate GitHub client to find the latest release tag and download assets
+- A Typst business model for platform-specific data like asset file conventions, package and cache locations etc.
+
+### Changed
+
+- The download task now gets an asset from the GitHub client instead of a URI and uses the GitHub client for downloading.
+
+### Removed
+
+- The GithubLatestRelease value source is not needed anymore, the plugin uses the GitHub client.
+
 ## [0.5.0] - 2025-04-24
 
 ### Added
 
-- Option to set PDF standard
+- Option to set the PDF standard
 
 ## [0.4.2] - 2025-01-09
 
@@ -67,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Task to convert images using ImageMagick
 - Tasks to download and install Typst from GitHub releases
 - DSL extension to configure Typst version and multiple source sets
-- Some auxiliary value sources for git has and latest GitHub release
+- Some auxiliary value sources to retrieve the git commit hash and the latest GitHub release
 
 [unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.5.0...HEAD
 [0.5.0]: https://github.com/infolektuell/gradle-typst/compare/v0.4.2...v0.5.0
