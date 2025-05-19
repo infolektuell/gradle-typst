@@ -18,9 +18,10 @@ gradlePlugin {
 
 signing {
     // Get credentials from env variables for better CI compatibility
+    val signingKeyId: String? by project
     val signingKey: String? by project
     val signingPassword: String? by project
-    useInMemoryPgpKeys(signingKey, signingPassword)
+    useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
 }
 
 java {
