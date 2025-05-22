@@ -15,10 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The download task now gets an asset from the GitHub client instead of a URI and uses the GitHub client for downloading.
+- `TypstCompileTask` uses a `ConfigurableFileCollection` named `includes` to track all files that could be part of a Typst document. Font paths are tracked separately.
 
 ### Removed
 
 - The GithubLatestRelease value source is not needed anymore, the plugin uses the GitHub client.
+- The nested `sources` property from `TypstCompileTask`
 
 ## [0.5.0] - 2025-04-24
 

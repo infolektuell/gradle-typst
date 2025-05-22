@@ -12,16 +12,8 @@ import javax.inject.Inject
 
 @Suppress("LeakingThis")
 abstract class TypstCompileTask @Inject constructor(private val executor: WorkerExecutor) : DefaultTask() {
-    interface SourceDirectories {
-        @get:InputFiles
-        val data: SetProperty<Directory>
-        @get:InputFiles
-        val fonts: ListProperty<Directory>
-        @get:InputFiles
-        val images: SetProperty<Directory>
-        @get:InputFiles
-        val typst: SetProperty<Directory>
-    }
+    @get:InputFiles
+    abstract val includes: ConfigurableFileCollection
 
     protected abstract class TypstAction @Inject constructor(private val execOperations: ExecOperations) : WorkAction<TypstAction.Params> {
         interface Params : WorkParameters {
@@ -31,7 +23,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
             val document: RegularFileProperty
             val root: Property<String>
             val variables: MapProperty<String, String>
-            val fontDirectories: ListProperty<Directory>
+            val fontDirectories: SetProperty<Directory>
             val creationTimestamp: Property<String>
             val useSystemFonts: Property<Boolean>
             val ppi: Property<Int>
@@ -85,8 +77,8 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
     abstract val pdfStandard: Property<String>
     @get:Input
     abstract val useSystemFonts: Property<Boolean>
-    @get:Nested
-    abstract val sources: SourceDirectories
+    @get:InputFiles
+    abstract val fontDirectories: SetProperty<Directory>
     @get:OutputDirectory
     abstract val destinationDir: DirectoryProperty
     @get:OutputFiles
@@ -104,7 +96,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
               params.document.set(document)
               params.root.set(root)
               params.variables.set(variables)
-              params.fontDirectories.set(sources.fonts)
+              params.fontDirectories.set(fontDirectories)
               params.useSystemFonts.set(useSystemFonts)
               params.creationTimestamp.set(creationTimestamp)
               params.ppi.set(ppi)

@@ -65,10 +65,8 @@ class GradleTypstPlugin : Plugin<Project> {
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
               task.pdfStandard.set(format.standard)
               task.variables.set(s.inputs)
-              task.sources.data.convention(s.data)
-              task.sources.fonts.convention(s.fonts)
-              task.sources.images.convention(s.images)
-              task.sources.typst.convention(s.typst)
+              task.includes.from(s.data, s.images, s.typst)
+              task.fontDirectories.convention(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("pdf"))
           }
           project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
@@ -84,10 +82,8 @@ class GradleTypstPlugin : Plugin<Project> {
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
               task.ppi.convention(format.ppi)
               task.variables.set(s.inputs)
-              task.sources.data.convention(s.data)
-              task.sources.fonts.convention(s.fonts)
-              task.sources.images.convention(s.images)
-              task.sources.typst.convention(s.typst)
+              task.includes.from(s.data, s.images, s.typst)
+              task.fontDirectories.convention(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("png"))
           }
           project.tasks.register("compile${title}TypstSvg", TypstCompileTask::class.java) { task ->
@@ -97,10 +93,8 @@ class GradleTypstPlugin : Plugin<Project> {
               task.documents.set(documentFilesProvider)
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
               task.variables.set(s.inputs)
-              task.sources.data.convention(s.data)
-              task.sources.fonts.convention(s.fonts)
-              task.sources.images.convention(s.images)
-              task.sources.typst.convention(s.typst)
+              task.includes.from(s.data, s.images, s.typst)
+              task.fontDirectories.convention(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("svg"))
           }
       }
