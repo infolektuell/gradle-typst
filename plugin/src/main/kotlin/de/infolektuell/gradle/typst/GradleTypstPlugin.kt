@@ -108,7 +108,9 @@ class GradleTypstPlugin : Plugin<Project> {
             task.dependsOn(project.tasks.withType(TypstCompileTask::class.java))
             task.dependsOn(project.tasks.withType(MergePDFTask::class.java))
         }
-        project.tasks.findByName(BasePlugin.ASSEMBLE_TASK_NAME)?.dependsOn(typstCompileTask)
+        project.pluginManager.withPlugin("base") {
+            project.tasks.named(BasePlugin.ASSEMBLE_TASK_NAME) { it.dependsOn(typstCompileTask) }
+        }
     }
   companion object {
     const val PLUGIN_NAME = "de.infolektuell.typst"
