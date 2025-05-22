@@ -22,7 +22,11 @@ class GradleTypstPlugin : Plugin<Project> {
             task.source.convention(downloadTask.flatMap { it.target })
             task.target.convention(project.layout.buildDirectory.dir("tools/typst"))
         }
-        extension.compiler.convention(extractTask.flatMap { it.target })
+        val executableProvider = extractTask.flatMap { it.target }
+            .map { dir ->
+            dir.asFileTree.matching { spec -> spec.include("**/typst") }.singleFile
+        }
+        extension.executable.convention(project.layout.file(executableProvider))
         if (store.hasPackages) extension.localPackages.convention(project.layout.projectDirectory.dir(store.packageDir.toString()))
         extension.sourceSets.configureEach { s ->
             s.format.pdf.enabled.convention(true)
@@ -31,7 +35,7 @@ class GradleTypstPlugin : Plugin<Project> {
             s.format.svg.enabled.convention(false)
         }
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
-        task.compiler.convention(extension.compiler)
+          task.executable.convention(extension.executable)
           task.packagePath.set(extension.localPackages)
           task.packageCachePath.set(store.packageCacheDir.toString())
           task.root.convention(project.layout.projectDirectory.asFile.absolutePath)

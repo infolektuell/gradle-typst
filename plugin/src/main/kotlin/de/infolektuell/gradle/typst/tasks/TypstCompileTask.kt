@@ -17,7 +17,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
 
     protected abstract class TypstAction @Inject constructor(private val execOperations: ExecOperations) : WorkAction<TypstAction.Params> {
         interface Params : WorkParameters {
-            val executable: Property<String>
+            val executable: RegularFileProperty
             val packagePath: DirectoryProperty
             val packageCachePath: Property<String>
             val document: RegularFileProperty
@@ -50,8 +50,8 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
         }
     }
 
-    @get:InputDirectory
-    abstract val compiler: DirectoryProperty
+    @get:InputFile
+    abstract val executable: RegularFileProperty
     @get:Optional
     @get:InputDirectory
     abstract val packagePath: DirectoryProperty
@@ -86,7 +86,7 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
 
   @TaskAction
   protected fun compile () {
-      val executable = compiler.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath
+      // val executable = compiler.asFileTree.matching { spec -> spec.include("**/typst", "**/typst.exe") }.singleFile.absolutePath
     val queue = executor.noIsolation()
       documents.get().zip(compiled.get()) { document, targetFile ->
           queue.submit(TypstAction::class.java) { params ->
