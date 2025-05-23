@@ -7,7 +7,9 @@ import org.gradle.api.provider.Property
 import java.io.Serializable
 import javax.inject.Inject
 
-sealed class TargetHandler(val extension: String) : Named
+sealed class TargetHandler(val extension: String) : Named {
+    abstract val compileTaskName: Property<String>
+}
 
 abstract class PdfTargetHandler @Inject constructor() : TargetHandler("pdf") {
     enum class PdfStandard(val value: String) : Serializable {

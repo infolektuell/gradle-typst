@@ -44,6 +44,9 @@ class GradleTypstPlugin : Plugin<Project> {
                 }
             }
         }
+        extension.merge.configureEach {
+            it.target.convention(project.layout.buildDirectory.file("merged/${it.name}.pdf"))
+        }
         extension.version.convention(project.providers.provider { GithubClient().findLatestTag("typst", "typst") })
         val assetProvider = extension.version.map { store.asset(it) }
       val downloadTask = project.tasks.register("downloadTypst", DownloadTask::class.java) { task ->
@@ -68,12 +71,14 @@ class GradleTypstPlugin : Plugin<Project> {
             task.creationTimestamp.convention(extension.creationTimestamp)
         }
         extension.groups.all { group ->
-            project.tasks.register("typstCompileGroup${group.name}", TypstCompileTask::class.java) { task ->
+            val taskName = "typstCompileGroup${group.name}"
+            project.tasks.register(taskName, TypstCompileTask::class.java) { task ->
                 task.includes.from(group.root, group.includes)
                 task.fontDirectories.add(group.root.dir("fonts"))
                 task.fontDirectories.addAll(group.includes.map { it.map { dir -> dir.dir("fonts") } })
                 group.documents.all { document ->
                     document.pdf.all { target ->
+                        target.compileTaskName.convention(taskName).finalizeValue()
                         project.objects.newInstance(TypstCompileTask.PdfDocumentConfig::class.java).apply {
                             input.set(document.input)
                             inputs.set(document.inputs)
@@ -83,6 +88,7 @@ class GradleTypstPlugin : Plugin<Project> {
                         }.also { task.documents.add(it) }
                     }
                     document.png.all { target ->
+                        target.compileTaskName.convention(taskName).finalizeValue()
                         project.objects.newInstance(TypstCompileTask.PngDocumentConfig::class.java).apply {
                             input.set(document.input)
                             inputs.set(document.inputs)
@@ -93,6 +99,7 @@ class GradleTypstPlugin : Plugin<Project> {
                         }.also { task.documents.add(it) }
                     }
                     document.png.all { target ->
+                        target.compileTaskName.convention(taskName).finalizeValue()
                         project.objects.newInstance(TypstCompileTask.SvgDocumentConfig::class.java).apply {
                             input.set(document.input)
                             inputs.set(document.inputs)
@@ -102,6 +109,15 @@ class GradleTypstPlugin : Plugin<Project> {
                         }.also { task.documents.add(it) }
                     }
                 }
+            }
+        }
+        extension.merge.all { merge ->
+            project.tasks.register("merge${merge.name}", MergePDFTask::class.java) { task ->
+                merge.source.all { target ->
+                    task.documents.add(target.outFile)
+                    task.dependsOn(target.compileTaskName)
+                }
+                task.merged.set(merge.target)
             }
         }
         val typstCompileTask = project.tasks.register("compileTypst") { task ->

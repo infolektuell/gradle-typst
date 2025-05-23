@@ -25,11 +25,17 @@ typst {
     creationTimestamp = timestamp.get()
     groups {
     register("main") {
+    inputs.put("x", "y")
     documents {
     register("document") {
             inputs.put("gitHash", project.version.toString())
-            pdf {
+            inputs.put("x", "hi")
+            val targets = pdf {
             register("pdf")
+            register("pdf2")
+            }
+            merge.register("full") {
+            source.addAll(targets)
             }
     }
     }
