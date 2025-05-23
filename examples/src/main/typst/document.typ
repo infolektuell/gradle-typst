@@ -1,5 +1,6 @@
 #let gitHash = sys.inputs.at("gitHash", default: "")
-
-= Test document #gitHash
+#let info = yaml("../data/info.yml")
+#set text(font: "Dejavu Sans")
+= #info.title #gitHash
 
 #lorem(5000)

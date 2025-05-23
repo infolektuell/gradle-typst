@@ -22,19 +22,17 @@ val timestamp = providers.of(GitCommitDateValueSource::class) {
 
 typst {
     version = "v0.12.0"
-    sourceSets {
-        create("main") {
-            documents.add("document")
-            inputs.put("gitHash", project.version.toString())
-            format {
-                pdf.enabled = true
-                svg.enabled = true
-                png {
-                    enabled = true
-                    ppi = 72
-                }
-            }
-        }
-    }
     creationTimestamp = timestamp.get()
+    groups {
+    register("main") {
+    documents {
+    register("document") {
+            inputs.put("gitHash", project.version.toString())
+            pdf {
+            register("pdf")
+            }
+    }
+    }
+    }
+    }
 }

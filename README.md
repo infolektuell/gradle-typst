@@ -142,17 +142,6 @@ Typst receives the project directory as root (not the root project), so absolute
 
 A document receives the fonts subfolders of their source set and added shared source sets as font paths.
 Since version 0.2.0 of this plugin, system fonts are ignored by default for higher reproducibility.
-If a Typst version below 0.12.0 is in use or if system fonts should be considered, this must be turned off per configuration:
-
-```gradle kotlin dsl
-import de.infolektuell.gradle.typst.tasks.TypstCompileTask
-
-// Configure all typst tasks
-tasks.withType(TypstCompileTask::class) {
-    // Override the convention (false by default)
-    useSystemFonts = true
-}
-```
 
 ### Creation date
 
@@ -177,22 +166,7 @@ typst.creationTimestamp = timestamp.get()
 ### Local packages
 
 Typst 0.12.0 added a CLI option to pass the path where local packages are stored.
-This plugin sets this explicitly to Typst's platform-dependent convention, so both are working with the same files.
-To use an older version of Typst, you have to opt-out of this behavior.
-
-```gradle kotlin dsl
-import de.infolektuell.gradle.typst.tasks.TypstCompileTask
-
-// Configure all typst tasks
-tasks.withType(TypstCompileTask::class) {
-    // Unset the package path
-    packagePath.unset()
-    // Optionally add the local packages folder from the typst extension to the source set to keep change tracking
-    sourceSets.register("main") {
-        typst.add(localPackages)
-    }
-}
-```
+This plugin sets this explicitly to Typst's platform-dependent convention since Typst v0.12.0, so both are working with the same files.
 
 ## License
 
