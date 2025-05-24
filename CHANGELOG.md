@@ -9,20 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The paths for generated images of a source set are forwarded to Typst via input variables.
+  The paths are relativized to the passed root directory, so the images can be loaded by Typst in a build-system-agnostic manner.
+- A source set inherits (extends) input variables from inherited source sets.
 - A separate GitHub client to find the latest release tag and download assets
 - A Typst business model for platform-specific data like asset file conventions, package and cache locations etc.
 
 ### Changed
 
-- The download task now gets an asset from the GitHub client instead of a URI and uses the GitHub client for downloading.
-- `TypstCompileTask` uses a `ConfigurableFileCollection` named `includes` to track all files that could be part of a Typst document. Font paths are tracked separately.
+- Source set inheritance is not managed via lists of directories anymore.
+  The source set objects are domain objects and directly added to the `includes` set of the inheriting source set.
+  Using the `addSourceSet` method in build scripts remains working as usual.
+- Instead of prescribing certain kinds of subdirectories in a source set, its location can be set via `root` property.
+  This folder will be watched for changes, but files can be excluded from watching via `excludePatterns`.
+- The `images` property in the source set DSL was replaced with a nested section where the paths to source and generated images can be customized.
 - `TypstCompileTask` and DSL extension use `executable` file property for the location of the Typst binary.
+- `TypstCompileTask` uses a `ConfigurableFileCollection` named `includes` to track all files that could be part of a Typst document. Font paths are tracked separately.
+- The download task now gets an asset from the GitHub client instead of a URI and uses the GitHub client for downloading.
 
 ### Removed
 
+- The `data` and `typst` properties in the source set DSL
 - The GithubLatestRelease value source is not needed anymore, the plugin uses the GitHub client.
 - The nested `sources` property from `TypstCompileTask`
 - The `compiler` property from `TypstCompileTask` and `TypstExtension`
+
+### Fixed
+
+- The plugin properly reacts to the `base` plugin without depending on plugin application order.
 
 ## [0.5.0] - 2025-04-24
 

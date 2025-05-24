@@ -7,6 +7,7 @@ import de.infolektuell.gradle.typst.tasks.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
+import kotlin.io.path.relativeTo
 
 class GradleTypstPlugin : Plugin<Project> {
     override fun apply(project: Project) {
@@ -29,6 +30,18 @@ class GradleTypstPlugin : Plugin<Project> {
         extension.executable.convention(project.layout.file(executableProvider))
         if (store.hasPackages) extension.localPackages.convention(project.layout.projectDirectory.dir(store.packageDir.toString()))
         extension.sourceSets.configureEach { s ->
+            s.root.convention(project.layout.projectDirectory.dir("src/${s.name}"))
+            s.excludePatterns.set(extension.excludePatterns)
+            s.destinationDir.convention(project.layout.buildDirectory.dir("typst/${s.name}"))
+            s.fonts.convention(s.root.dir("fonts"))
+            s.images.source.convention(s.root.dir("images"))
+            s.images.converted.convention(project.layout.buildDirectory.dir("generated/typst/images/${s.name}"))
+            val relativizedImages = s.images.converted.map { images ->
+                val root = project.layout.projectDirectory.asFile.toPath()
+                val target = images.asFile.toPath()
+                "/" + target.relativeTo(root).toString()
+            }
+            s.inputs.put("${s.name}-converted-images", relativizedImages)
             s.format.pdf.enabled.convention(true)
             s.format.png.enabled.convention(false)
             s.format.png.ppi.convention(144)
@@ -44,23 +57,15 @@ class GradleTypstPlugin : Plugin<Project> {
       }
       extension.sourceSets.all { s ->
           val title = s.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-          val sourceRoot = project.layout.projectDirectory.dir("src/${s.name}")
-          val imagesRoot = sourceRoot.dir("images")
-          val typstRoot = sourceRoot.dir("typst")
-          s.typst.add(typstRoot)
-          s.data.add(sourceRoot.dir("data"))
-          s.fonts.add(sourceRoot.dir("fonts"))
-          s.images.add(imagesRoot)
-          s.destinationDir.convention(project.layout.buildDirectory.dir("typst/${s.name}"))
-        val convertImagesTask = project.tasks.register("convert${title}Images", ConvertImagesTask::class.java) { task ->
-            task.onlyIf { task.source.get().asFile.exists() }
-            task.source.convention(imagesRoot)
-            task.target.convention(project.layout.buildDirectory.dir("generated/typst/images/${s.name}"))
-            task.format.convention("png")
-            task.quality.convention(100)
-        }
-          s.images.add(convertImagesTask.flatMap { it.target })
-          val documentFilesProvider = s.documents.map { docs -> docs.map { typstRoot.file("$it.typ") } }
+          val convertImagesTask = project.tasks.register("convert${title}Images", ConvertImagesTask::class.java) { task ->
+              task.onlyIf { task.source.get().asFile.exists() }
+              task.source.convention(s.images.source)
+              task.target.convention(s.images.converted)
+              task.format.convention("png")
+              task.quality.convention(100)
+          }
+          val documentFilesProvider = s.documents.zip(s.root) { docs, root -> docs.map { root.file("typst/$it.typ") } }
+          val convertedImagesProvider = convertImagesTask.flatMap { it.target }
           val typstTask = project.tasks.register("compile${title}TypstPdf", TypstCompileTask::class.java) { task ->
               val format = s.format.pdf
               task.onlyIf { format.enabled.get() }
@@ -68,9 +73,14 @@ class GradleTypstPlugin : Plugin<Project> {
               task.documents.set(documentFilesProvider)
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
               task.pdfStandard.set(format.standard)
-              task.variables.set(s.inputs)
-              task.includes.from(s.data, s.images, s.typst)
-              task.fontDirectories.convention(s.fonts)
+              s.includes.forEach { include ->
+                  task.variables.putAll(include.inputs)
+                  task.includes.from(include.files)
+                  task.fontDirectories.add(include.fonts)
+              }
+              task.variables.putAll(s.inputs)
+              task.includes.from(s.files, convertedImagesProvider)
+              task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("pdf"))
           }
           project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
@@ -85,9 +95,14 @@ class GradleTypstPlugin : Plugin<Project> {
               task.documents.set(documentFilesProvider)
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
               task.ppi.convention(format.ppi)
-              task.variables.set(s.inputs)
-              task.includes.from(s.data, s.images, s.typst)
-              task.fontDirectories.convention(s.fonts)
+              s.includes.forEach { include ->
+                  task.variables.putAll(include.inputs)
+                  task.includes.from(include.files)
+                  task.fontDirectories.add(include.fonts)
+              }
+              task.variables.putAll(s.inputs)
+              task.includes.from(s.files, convertedImagesProvider)
+              task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("png"))
           }
           project.tasks.register("compile${title}TypstSvg", TypstCompileTask::class.java) { task ->
@@ -96,9 +111,14 @@ class GradleTypstPlugin : Plugin<Project> {
               task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.set(documentFilesProvider)
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
-              task.variables.set(s.inputs)
-              task.includes.from(s.data, s.images, s.typst)
-              task.fontDirectories.convention(s.fonts)
+              s.includes.forEach { include ->
+                  task.variables.putAll(include.inputs)
+                  task.includes.from(include.files)
+                  task.fontDirectories.add(include.fonts)
+              }
+              task.variables.putAll(s.inputs)
+              task.includes.from(s.files, convertedImagesProvider)
+              task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("svg"))
           }
       }

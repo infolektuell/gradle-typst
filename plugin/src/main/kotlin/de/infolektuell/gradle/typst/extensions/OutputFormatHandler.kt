@@ -4,7 +4,7 @@ import org.gradle.api.Action
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Nested
 
-abstract class TypstOutputFormatExtension {
+abstract class OutputFormatHandler {
     abstract class OutputFormat {
         abstract val enabled: Property<Boolean>
     }
