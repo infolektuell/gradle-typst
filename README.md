@@ -2,7 +2,7 @@
 
 [![Gradle Plugin Portal Version](https://img.shields.io/gradle-plugin-portal/v/de.infolektuell.typst)](https://plugins.gradle.org/plugin/de.infolektuell.typst)
 
-[Typst] is a new markup-based typesetting system that is designed to be as powerful as LaTeX while being much easier to learn and use.
+[Typst] is a new markup-based typesetting system designed to be as powerful as LaTeX while being much easier to learn and use.
 A Typst document can be compiled from a single _.typ_ file, but a complex project can also contain many files, including data, images, and fonts.
 The Typst compiler needs the correct file paths to find everything and compile such projects successfully.
 This Gradle plugin offers a way to maintain such projects:
@@ -12,7 +12,7 @@ This Gradle plugin offers a way to maintain such projects:
 - [x] Compile multiple documents in parallel for faster builds
 - [x] Generate all output formats supported by Typst (PDF, PNG, and SVG)
 - [x] Incremental build: Edit files and rebuild only affected documents
-- [x] Typst can either be automatically downloaded from GitHub releases, or use a local installation
+- [x] Typst can either be automatically downloaded from GitHub releases or use a local installation
 - [x] Define multiple source sets in one project to produce variants of your content, e.g., versions for printing and web publishing
 - [x] Track changes in locally installed Typst packages
 - [x] Convert unsupported image formats to format supported by Typst (ImageMagick required)
@@ -22,7 +22,7 @@ This Gradle plugin offers a way to maintain such projects:
 
 ## Requirements
 
-The plugin expects these tools being installed locally:
+The plugin expects these locally installed tools:
 
 - Java 17 or above
 - [ImageMagick] for image conversion (Optional)
@@ -35,30 +35,40 @@ After creating a new Gradle project with `gradle init`, the plugin needs to be c
 
 ```gradle kotlin dsl
 plugins {
-    // Good practice to have some standard tasks like clean, assemble, build
-    id("base")
-    // Apply the Typst plugin
-    id("de.infolektuell.typst") version "0.5.0"
+    id("base") // some standard tasks like clean, assemble, build
+    id("de.infolektuell.typst") version "0.5.0" // Apply the Typst plugin
 }
 
-// The release tag for the Typst version to be used, defaults to latest stable release on GitHub
-typst.version = "v0.12.0"
+typst.version = "v0.13.1" // The release tag for the Typst version to be used, defaults to latest stable release on GitHub
 ```
 
 ### Adding sources
 
-A source set is a directory in your project under _src_ that may contain subfolders for Typst files, data, images, and fonts.
-The Typst files that should be treated as input documents to be compiled must explicitly be configured.
-There can be one or as many of them as needed.
-Having multiple source sets can be useful if multiple variants of similar content should be produced, especially for data-driven documents.
-Otherwise, a single source set is sufficient.
-So let's add two of them in _build.gradle.kts_:
+A source set is a directory in your project under _src_ that may contain Typst files, data, images, fonts, etc.
+It can depend on other source sets, e.g., shared templates.
+So there are two kinds of source sets:
+
+- Primary source sets contain documents to be compiled.
+- Secondary or transient source sets have no documents, but they contain material which is used by primary source sets.
+
+Documents in a primary source set are recompiled if files in one of its secondary source sets have changed.
+
+Having multiple source sets offers flexibility and build performance at once.
+It makes use of parallel compilation and incrementally re-compiles those documents where the source set files have changed.
+
+- You can, e.g., have multiple variants of the same documents for web publishing and printing.
+- You can have many document groups that follow a similar schema. For video production, each video could be a source set and requires a script, slides, and a thumbnail.
+
+The Typst documents must explicitly be configured in primary source sets.
+So let's add some source sets to _build.gradle.kts_:
 
 ```gradle kotlin dsl
-// The source sets container
 typst.sourceSets {
-    // Sources for documents intended for web publishing in src/web folder
+    val shared by registering // Sources in src/shared
+
+    // Sources in src/web
     val web by registering {
+        addSourceSet(shared) // Depends on shared files
         // The files to compile (without .typ extension)
         documents = listOf("frontmatter", "main", "appendix", "backmatter")
         // Values set in this map are passed to Typst as --input options
@@ -67,40 +77,18 @@ typst.sourceSets {
 
     // Sources for documents intended for printing in src/printing folder
     val printing by registering {
+        addSourceSet(shared) // Depends on shared files
         documents = listOf("frontmatter", "main", "poster", "appendix", "backmatter")
     }
 }
 ```
 
-In a source set folder, these subfolders are watched for changes:
-
-- _data_: Files in YAML, TOML or JSON format
-- _fonts_: Additional font files for your documents
-- _images_: Image files included in your documents
-- _typst_: Typst files, can be documents or contain declarations for importing
-
 Running `gradlew build` now will compile all documents into _build/typst/<source set>/_.
-
-### Shared sources
-
-If multiple source sets have many files in common, they could go into their own source set without documents.
-The source sets using these files can depend on this new shared source set.
-
-```gradle kotlin dsl
-typst.sourceSets {
-    // Sources used by other source sets in src/shared
-    val shared by registering
-
-    val printing by registering {
-        // Shared sources are also watched when printing documents are compiled
-        addSourceSet(shared)
-    }
-}
-```
 
 ### Output formats
 
 Currently, Typst can output a document as PDF or as a series of images in PNG or SVG format.
+HTML will be supported by this plugin when it becomes a stable feature.
 The desired output options can be configured per source set, e.g., PDF for printing and PNG for web publishing.
 
 ```gradle kotlin dsl
@@ -131,16 +119,39 @@ typst.sourceSets {
 }
 ```
 
+PDF merging is done via [Pdfbox].
+
 ### Images
 
-Image files in _src/<source set>/images_ are copied to _build/generated/typst/images_.
-If the format ist not supported by Typst, they are converted to png before copying.
-Typst runs after image processing, so the images can be referenced by their path in Typst files.
-Typst receives the project directory as root (not the root project), so absolute import paths start with _/src/_.
+In every primary and secondary source set, a special folder is searched for images (by default src/<sourceSetName>/images).
+This folder is customizable in the DSL via `images.source` property in a source set definition.
+Before Typst runs, image files in that folder are copied to a folder in the build directory which is also customizable.
+If the format is not supported by Typst, they are converted to png using [Imagemagick] before copying.
+Alternately, there are some community packages like [Grayness] for more image formats.
+
+The paths relative to the Typst root path are passed to documents as input variables named `<sourceSetName>-converted-images`.
+This enables loading of images in a build-system-agnostic manner, the Typst documents don't need to know about Gradle's build directory.
+In this example document, a document uses an image from a common source set.
+
+```typst
+#let commitHash = sys.inputs.at("gitHash", default: "")
+#let convertedImages = sys.inputs.at("common-converted-images")
+
+= Test document version #commitHash
+
+#image(convertedImages + "/test-image.png")
+
+#lorem(5000)
+```
+
+If this should be compiled without Gradle, the image paths must be supplied as input variables and the document remains untouched.
 
 ### Fonts
 
-A document receives the fonts subfolders of their source set and added shared source sets as font paths.
+In every primary and secondary source set, a certain subfolder is searched for fonts (by default _src/<sourceSetName>/fonts_).
+This is customizable in the source set DSL.
+The Typst compiler looks for font files in the fonts directories of a primary and its secondary source sets.
+
 Since version 0.2.0 of this plugin, system fonts are ignored by default for higher reproducibility.
 If a Typst version below 0.12.0 is in use or if system fonts should be considered, this must be turned off per configuration:
 
@@ -156,7 +167,7 @@ tasks.withType(TypstCompileTask::class) {
 
 ### Creation date
 
-For better build reproducibility, Typst accepts a fixed creation date in UNIX timestamp format.
+For better build reproducibility, Typst accepts a fixed creation date in UNIX timestamp format which can be set in the plugin's `typst` DSL.
 See [SOURCE_DATE_EPOCH specification] for a format description.
 If no timestamp is set, it is determined by Typst.
 
@@ -174,11 +185,23 @@ val timestamp = providers.of(GitCommitDateValueSource::class) {
 typst.creationTimestamp = timestamp.get()
 ```
 
+### Using a local executable
+
+The given Typst version is downloaded into the build folder by default, but using a locally installed Typst binary is possible too.
+Anyway, the version should be specified explicitly.
+
+```gradle kotlin dsl
+typst {
+    version = "0.13.1"
+    executable = project.layout.file("/usr/local/bin/typst")
+}
+```
+
 ### Local packages
 
 Typst 0.12.0 added a CLI option to pass the path where local packages are stored.
 This plugin sets this explicitly to Typst's platform-dependent convention, so both are working with the same files.
-To use an older version of Typst, you have to opt-out of this behavior.
+To use an older version of Typst, you have to opt out of this behavior.
 
 ```gradle kotlin dsl
 import de.infolektuell.gradle.typst.tasks.TypstCompileTask
@@ -194,6 +217,10 @@ tasks.withType(TypstCompileTask::class) {
 }
 ```
 
+### Excluding files from watching
+
+If the project contains many or large files that slow down the build, they can be excluded via `excludePatterns` in the DSL (top-level or per source set).
+
 ## License
 
 [MIT License](LICENSE.txt)
@@ -202,5 +229,6 @@ tasks.withType(TypstCompileTask::class) {
 [configuration cache]: https://docs.gradle.org/current/userguide/configuration_cache.html
 [build cache]: https://docs.gradle.org/current/userguide/build_cache.html
 [imagemagick]: https://imagemagick.org/
+[grayness]: https://typst.app/universe/package/grayness/
 [pdfbox]: https://pdfbox.apache.org/
 [SOURCE_DATE_EPOCH specification]: https://reproducible-builds.org/specs/source-date-epoch/
