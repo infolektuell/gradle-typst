@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2025-05-25
+
 ### Added
 
 - The paths for generated images of a source set are forwarded to Typst via input variables.
@@ -100,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DSL extension to configure Typst version and multiple source sets
 - Some auxiliary value sources to retrieve the git commit hash and the latest GitHub release
 
-[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/infolektuell/gradle-typst/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/infolektuell/gradle-typst/compare/v0.4.2...v0.5.0
 [0.4.2]: https://github.com/infolektuell/gradle-typst/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/infolektuell/gradle-typst/compare/v0.4.0...v0.4.1
