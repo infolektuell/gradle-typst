@@ -4,10 +4,11 @@
 package de.infolektuell.gradle.typst
 
 import java.io.File
-import kotlin.test.assertTrue
+import kotlin.test.assertContains
 import kotlin.test.Test
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.io.TempDir
+import kotlin.io.path.createParentDirectories
 
 /**
  * A simple functional test for the 'org.example.greeting' plugin.
@@ -19,15 +20,27 @@ class GradleTypstPluginFunctionalTest {
 
     private val buildFile by lazy { projectDir.resolve("build.gradle") }
     private val settingsFile by lazy { projectDir.resolve("settings.gradle") }
+    private val typstFile by lazy { projectDir.resolve("src/main/typst/document.typ") }
 
     @Test fun `can run task`() {
         // Set up the test build
         settingsFile.writeText("")
         buildFile.writeText("""
             plugins {
+                id("base")
                 id('de.infolektuell.typst')
             }
+            typst {
+                version = "v0.13.1"
+                sourceSets {
+                    register("main") {
+                        documents.add("document")
+                    }
+                }
+            }
         """.trimIndent())
+        typstFile.toPath().createParentDirectories()
+        typstFile.writeText("= Test Document\n")
 
         // Run the build
         val runner = GradleRunner.create()
@@ -35,5 +48,6 @@ class GradleTypstPluginFunctionalTest {
         runner.withPluginClasspath()
         runner.withProjectDir(projectDir)
         val result = runner.build()
+        assertContains(result.output, "SUCCESSFUL")
     }
 }
