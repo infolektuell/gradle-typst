@@ -25,7 +25,7 @@ class GradleTypstPlugin : Plugin<Project> {
         }
         val executableProvider = extractTask.flatMap { it.target }
             .map { dir ->
-            dir.asFileTree.matching { spec -> spec.include("**/typst") }.singleFile
+            dir.asFileTree.matching { spec -> spec.include("**/" + store.executableName) }.singleFile
         }
         extension.executable.convention(project.layout.file(executableProvider))
         if (store.hasPackages) extension.localPackages.convention(project.layout.projectDirectory.dir(store.packageDir.toString()))

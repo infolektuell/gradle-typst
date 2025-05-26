@@ -42,6 +42,12 @@ class TypstDataStore {
             Arch.X64
         }
     }
+    val executableName: String get() {
+        return when(os) {
+            OS.WINDOWS -> "typst.exe"
+            else -> "typst"
+        }
+    }
     val dataDir: Path get() {
         val homeDir = Path.of(System.getProperty("user.home"))
         return when(os) {

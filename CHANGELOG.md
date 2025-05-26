@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Downloaded Typst executable is also found under Windows.
+
 ## [0.6.0] - 2025-05-25
 
 ### Added
