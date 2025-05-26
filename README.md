@@ -36,7 +36,7 @@ After creating a new Gradle project with `gradle init`, the plugin needs to be c
 ```gradle kotlin dsl
 plugins {
     id("base") // some standard tasks like clean, assemble, build
-    id("de.infolektuell.typst") version "0.6.0" // Apply the Typst plugin
+    id("de.infolektuell.typst") version "0.6.1" // Apply the Typst plugin
 }
 
 typst.version = "v0.13.1" // The release tag for the Typst version to be used, defaults to latest stable release on GitHub
