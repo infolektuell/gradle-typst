@@ -60,7 +60,22 @@ It makes use of parallel compilation and incrementally re-compiles those documen
 - You can have many document groups that follow a similar schema. For video production, each video could be a source set and requires a script, slides, and a thumbnail.
 
 The Typst documents must explicitly be configured in primary source sets.
-So let's add some source sets to _build.gradle.kts_:
+So let's add a source set to _build.gradle.kts_:
+
+```gradle kotlin dsl
+typst.sourceSets {
+    // Sources in src/main
+    val main by registering {
+        // The files to compile (without .typ extension)
+        documents = listOf("document")
+    }
+```
+
+The plugin will search for Typst files under _src/main/typst/_.
+Next, create _document.typ_ in this directory.
+Running `gradlew build` now will compile your _document.typ_ file into _build/typst/<source set>/pdf/document.pdf_.
+
+This example configures a multi-source-set project:
 
 ```gradle kotlin dsl
 typst.sourceSets {
@@ -82,8 +97,6 @@ typst.sourceSets {
     }
 }
 ```
-
-Running `gradlew build` now will compile all documents into _build/typst/<source set>/_.
 
 ### Output formats
 
