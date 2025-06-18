@@ -66,8 +66,8 @@ So let's add a source set to _build.gradle.kts_:
 typst.sourceSets {
     // Sources in src/main
     val main by registering {
-        // The files to compile (without .typ extension)
-        documents = listOf("document")
+        // The files to compile (without .typ extension) in src/main/typst
+        documents = listOf("document") // src/main/typst/document.typst
     }
 ```
 
