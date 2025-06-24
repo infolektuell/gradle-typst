@@ -10,7 +10,7 @@ import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import javax.inject.Inject
 
-abstract class TypstCompileTask @Inject constructor(private val executor: WorkerExecutor) : DefaultTask() {
+abstract class TypstCompileTask @Inject constructor(private val fileSystemOperations: FileSystemOperations, private val executor: WorkerExecutor) : DefaultTask() {
     @get:InputFiles
     abstract val includes: ConfigurableFileCollection
 
@@ -109,6 +109,11 @@ abstract class TypstCompileTask @Inject constructor(private val executor: Worker
 
     @TaskAction
     protected fun compile() {
+        fileSystemOperations.delete { spec ->
+            spec.delete(destinationDir.get().asFileTree.matching {
+                it.include("**/*.png", "**/*.svg")
+            })
+        }
         val queue = executor.noIsolation()
         documents.get().zip(compiled.get()) { document, targetFile ->
             queue.submit(TypstAction::class.java) { params ->

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A filename template can be supplied in the output format DSL for png or svg.
+- Output directories for png and svg are cleaned before compilation to avoid stale files.
 
 ### Changed
 
