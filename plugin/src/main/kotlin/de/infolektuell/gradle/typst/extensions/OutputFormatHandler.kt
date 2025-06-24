@@ -17,9 +17,11 @@ abstract class OutputFormatHandler {
     abstract class PNG : OutputFormat() {
         val extension: String get() = "png"
         abstract val ppi: Property<Int>
+        abstract val filenameTemplate: Property<String>
     }
     abstract class SVG : OutputFormat() {
         val extension: String get() = "svg"
+        abstract val filenameTemplate: Property<String>
     }
     @get:Nested
     abstract val pdf: PDF

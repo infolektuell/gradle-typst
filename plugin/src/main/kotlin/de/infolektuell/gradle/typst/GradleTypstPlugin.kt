@@ -49,7 +49,9 @@ class GradleTypstPlugin : Plugin<Project> {
             s.format.pdf.enabled.convention(true)
             s.format.png.enabled.convention(false)
             s.format.png.ppi.convention(144)
+            s.format.png.filenameTemplate.convention("{p}-of-{t}.png")
             s.format.svg.enabled.convention(false)
+            s.format.svg.filenameTemplate.convention("{p}-of-{t}.svg")
         }
       project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
           task.executable.convention(extension.executable)
@@ -98,7 +100,7 @@ class GradleTypstPlugin : Plugin<Project> {
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.set(documentFilesProvider)
-              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
+              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
               task.ppi.convention(format.ppi)
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
@@ -116,7 +118,7 @@ class GradleTypstPlugin : Plugin<Project> {
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.set(documentFilesProvider)
-              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it-{p}-of-{t}.${format.extension}" } })
+              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
                   task.includes.from(include.files)

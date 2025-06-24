@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A filename template can be supplied in the output format DSL for png or svg.
+
+### Changed
+
+- If documents are compiled to png or svg output, a document-specific subdirectory is created in the respective output directory.
+
 ## [0.6.2] - 2025-06-24
 
 ### Added
