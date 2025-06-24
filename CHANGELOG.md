@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2025-06-24
+
 ### Added
 
-- Every source set in the DSL now provides the names for its related tasks to facilitade dependency declaration.
+- Every source set in the DSL now provides the names for its related tasks to facilitate dependency declaration.
 
 ### Changed
 
@@ -37,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The paths are relativized to the passed root directory, so the images can be loaded by Typst in a build-system-agnostic manner.
 - A source set inherits (extends) input variables from inherited source sets.
 - A separate GitHub client to find the latest release tag and download assets
-- A Typst business model for platform-specific data like asset file conventions, package and cache locations etc.
+- A Typst business model for platform-specific data like asset file conventions, package and cache locations, etc.
 
 ### Changed
 
@@ -124,7 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - DSL extension to configure Typst version and multiple source sets
 - Some auxiliary value sources to retrieve the git commit hash and the latest GitHub release
 
-[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.6.1...HEAD
+[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/infolektuell/gradle-typst/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/infolektuell/gradle-typst/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/infolektuell/gradle-typst/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/infolektuell/gradle-typst/compare/v0.4.2...v0.5.0
