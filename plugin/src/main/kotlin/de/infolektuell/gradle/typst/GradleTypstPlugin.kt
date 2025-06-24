@@ -18,14 +18,14 @@ class GradleTypstPlugin : Plugin<Project> {
         extension.version.convention(project.providers.provider { GithubClient().findLatestTag("typst", "typst") })
         val assetProvider = extension.version.map { store.asset(it) }
         val downloadDirectoryProvider: Provider<Directory> = project.layout.projectDirectory.dir(project.providers.systemProperty("java.io.tmpdir").map { "${it}/gradle_download" })
-        val typstDirectoryprovider = downloadDirectoryProvider.zip(assetProvider) { dir, asset -> dir.dir("typst-${asset.tag}" )}
+        val typstDirectoryProvider = downloadDirectoryProvider.zip(assetProvider) { dir, asset -> dir.dir("typst-${asset.tag}" )}
         val downloadTask = project.tasks.register("downloadTypst", DownloadTask::class.java) { task ->
           task.asset.convention(assetProvider)
-          task.target.convention(typstDirectoryprovider.zip(assetProvider) { dir, asset -> dir.file("download/${asset.filename}") })
+          task.target.convention(typstDirectoryProvider.zip(assetProvider) { dir, asset -> dir.file("download/${asset.filename}") })
       }
         val extractTask = project.tasks.register("extractTypst", ExtractTask::class.java) { task ->
             task.source.convention(downloadTask.flatMap { it.target })
-            task.target.convention(typstDirectoryprovider.map { dir -> dir.dir("install") })
+            task.target.convention(typstDirectoryProvider.map { dir -> dir.dir("install") })
         }
         val executableProvider = extractTask.flatMap { it.target }
             .map { dir ->
@@ -61,7 +61,7 @@ class GradleTypstPlugin : Plugin<Project> {
       }
       extension.sourceSets.all { s ->
           val title = s.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-          val convertImagesTask = project.tasks.register("convert${title}Images", ConvertImagesTask::class.java) { task ->
+          val convertImagesTask = project.tasks.register(s.convertImagesTaskName, ConvertImagesTask::class.java) { task ->
               task.onlyIf { task.source.get().asFile.exists() }
               task.source.convention(s.images.source)
               task.target.convention(s.images.converted)
@@ -70,7 +70,7 @@ class GradleTypstPlugin : Plugin<Project> {
           }
           val documentFilesProvider = s.documents.zip(s.root) { docs, root -> docs.map { root.file("typst/$it.typ") } }
           val convertedImagesProvider = convertImagesTask.flatMap { it.target }
-          val typstTask = project.tasks.register("compile${title}TypstPdf", TypstCompileTask::class.java) { task ->
+          val typstTask = project.tasks.register(s.pdfCompileTaskName, TypstCompileTask::class.java) { task ->
               val format = s.format.pdf
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
@@ -80,6 +80,7 @@ class GradleTypstPlugin : Plugin<Project> {
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
                   task.includes.from(include.files)
+                  task.includes.from(project.tasks.named(include.convertImagesTaskName))
                   task.fontDirectories.add(include.fonts)
               }
               task.variables.putAll(s.inputs)
@@ -92,7 +93,7 @@ class GradleTypstPlugin : Plugin<Project> {
               task.documents.set(typstTask.flatMap { it.compiled })
               task.merged.convention(s.format.pdf.merged.zip(s.destinationDir) { name, dir -> dir.file("$name.pdf") })
           }
-          project.tasks.register("compile${title}TypstPng", TypstCompileTask::class.java) { task ->
+          project.tasks.register(s.pngCompileTaskName, TypstCompileTask::class.java) { task ->
               val format = s.format.png
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
@@ -102,6 +103,7 @@ class GradleTypstPlugin : Plugin<Project> {
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
                   task.includes.from(include.files)
+                  task.includes.from(project.tasks.named(include.convertImagesTaskName))
                   task.fontDirectories.add(include.fonts)
               }
               task.variables.putAll(s.inputs)
@@ -109,7 +111,7 @@ class GradleTypstPlugin : Plugin<Project> {
               task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("png"))
           }
-          project.tasks.register("compile${title}TypstSvg", TypstCompileTask::class.java) { task ->
+          project.tasks.register(s.svgCompileTaskName, TypstCompileTask::class.java) { task ->
               val format = s.format.svg
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
@@ -118,6 +120,7 @@ class GradleTypstPlugin : Plugin<Project> {
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
                   task.includes.from(include.files)
+                  task.includes.from(project.tasks.named(include.convertImagesTaskName))
                   task.fontDirectories.add(include.fonts)
               }
               task.variables.putAll(s.inputs)

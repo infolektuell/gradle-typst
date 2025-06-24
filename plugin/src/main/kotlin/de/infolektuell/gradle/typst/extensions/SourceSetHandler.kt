@@ -12,6 +12,11 @@ import org.gradle.api.provider.Provider
 import javax.inject.Inject
 
 abstract class SourceSetHandler @Inject constructor(objects: ObjectFactory) : Named {
+    private val title get() = name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+    val pdfCompileTaskName get() = "compile${title}TypstPdf"
+    val pngCompileTaskName get() = "compile${title}TypstPng"
+    val svgCompileTaskName get() = "compile${title}TypstSvg"
+    val convertImagesTaskName get() = "convert${title}Images"
     val includes: NamedDomainObjectSet<SourceSetHandler> = objects.namedDomainObjectSet(SourceSetHandler::class.java)
     fun includes(action: Action<in NamedDomainObjectSet<SourceSetHandler>>) {
         action.execute(includes)
