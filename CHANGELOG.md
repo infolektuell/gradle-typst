@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Downloaded and extracted Typst distributions are copied into a temporary directory instead of a build directory.
+
 ## [0.6.1] - 2025-05-26
 
 ### Added

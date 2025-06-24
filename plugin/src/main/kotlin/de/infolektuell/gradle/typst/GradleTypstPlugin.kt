@@ -6,7 +6,9 @@ import de.infolektuell.gradle.typst.service.TypstDataStore
 import de.infolektuell.gradle.typst.tasks.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.file.Directory
 import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.provider.Provider
 import kotlin.io.path.relativeTo
 
 class GradleTypstPlugin : Plugin<Project> {
@@ -15,13 +17,15 @@ class GradleTypstPlugin : Plugin<Project> {
         val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
         extension.version.convention(project.providers.provider { GithubClient().findLatestTag("typst", "typst") })
         val assetProvider = extension.version.map { store.asset(it) }
-      val downloadTask = project.tasks.register("downloadTypst", DownloadTask::class.java) { task ->
+        val downloadDirectoryProvider: Provider<Directory> = project.layout.projectDirectory.dir(project.providers.systemProperty("java.io.tmpdir").map { "${it}/gradle_download" })
+        val typstDirectoryprovider = downloadDirectoryProvider.zip(assetProvider) { dir, asset -> dir.dir("typst-${asset.tag}" )}
+        val downloadTask = project.tasks.register("downloadTypst", DownloadTask::class.java) { task ->
           task.asset.convention(assetProvider)
-          task.target.convention(assetProvider.flatMap { project.layout.buildDirectory.file("downloads/${it.filename}") })
+          task.target.convention(typstDirectoryprovider.zip(assetProvider) { dir, asset -> dir.file("download/${asset.filename}") })
       }
         val extractTask = project.tasks.register("extractTypst", ExtractTask::class.java) { task ->
             task.source.convention(downloadTask.flatMap { it.target })
-            task.target.convention(project.layout.buildDirectory.dir("tools/typst"))
+            task.target.convention(typstDirectoryprovider.map { dir -> dir.dir("install") })
         }
         val executableProvider = extractTask.flatMap { it.target }
             .map { dir ->
