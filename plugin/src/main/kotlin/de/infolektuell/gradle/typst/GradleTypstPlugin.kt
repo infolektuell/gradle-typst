@@ -7,6 +7,7 @@ import de.infolektuell.gradle.typst.tasks.*
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.Directory
+import org.gradle.api.file.RegularFile
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.provider.Provider
 import kotlin.io.path.relativeTo
@@ -89,6 +90,12 @@ class GradleTypstPlugin : Plugin<Project> {
               task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("pdf"))
               task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
+              val outputProvider = task.destinationDir.zip(s.documents) { dir, docs ->
+                  val map = mutableMapOf<String, RegularFile>()
+                  docs.forEach { map.put(it, dir.file("$it.${format.extension}")) }
+                  map
+              }
+              format.output.convention(outputProvider).disallowChanges()
           }
           project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
               task.onlyIf { s.format.pdf.merged.isPresent }
@@ -100,7 +107,6 @@ class GradleTypstPlugin : Plugin<Project> {
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.set(documentFilesProvider)
-              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
               task.ppi.convention(format.ppi)
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
@@ -112,13 +118,19 @@ class GradleTypstPlugin : Plugin<Project> {
               task.includes.from(s.files, convertedImagesProvider)
               task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("png"))
+              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
+              val outputProvider = task.destinationDir.zip(s.documents) { dir, docs ->
+                  val map = mutableMapOf<String, Directory>()
+                  docs.forEach { map.put(it, dir.dir(it)) }
+                  map
+              }
+              format.output.convention(outputProvider).disallowChanges()
           }
           project.tasks.register(s.svgCompileTaskName, TypstCompileTask::class.java) { task ->
               val format = s.format.svg
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.set(documentFilesProvider)
-              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
                   task.includes.from(include.files)
@@ -129,6 +141,13 @@ class GradleTypstPlugin : Plugin<Project> {
               task.includes.from(s.files, convertedImagesProvider)
               task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("svg"))
+              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
+              val outputProvider = task.destinationDir.zip(s.documents) { dir, docs ->
+                  val map = mutableMapOf<String, Directory>()
+                  docs.forEach { map.put(it, dir.dir(it)) }
+                  map
+              }
+              format.output.convention(outputProvider).disallowChanges()
           }
       }
         val typstCompileTask = project.tasks.register("compileTypst") { task ->
