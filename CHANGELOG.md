@@ -10,11 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - A filename template can be supplied in the output format DSL for png or svg.
+- The DSL extension exposes convenience properties to access the Typst output files per document.
 - Output directories for png and svg are cleaned before compilation to avoid stale files.
 
 ### Changed
 
 - If documents are compiled to png or svg output, a document-specific subdirectory is created in the respective output directory.
+
+### Removed
+
+- In `TypstCompileTask` the `compiled` provider has been removed, because it contains non-existing files for png and svg formats.
 
 ## [0.6.2] - 2025-06-24
 
