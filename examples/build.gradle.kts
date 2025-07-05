@@ -23,16 +23,24 @@ val timestamp = providers.of(GitCommitDateValueSource::class) {
 typst {
     version = "v0.13.1"
     creationTimestamp = timestamp.get()
-    sourceSets {
-        val common by registering {
-            inputs.put("gitHash", project.version.toString())
-        }
-        register("main") {
-            addSourceSet(common)
-            documents.add("document")
-            format {
-                png.enabled = true
-            }
-        }
-    }
 }
+
+val common by typst.sourceSets.registering {
+    inputs.put("gitHash", project.version.toString())
+}
+
+val main by typst.sourceSets.registering {
+    addSourceSet(common)
+    documents.add("document")
+    format {
+        png.enabled = true
+        svg.enabled = true
+    }
+    val copyTask by tasks.registering(Copy::class) {
+        from(format.pdf.output.getting("document"))
+        into("build/copy")
+    }
+    tasks.named("assemble") { dependsOn(copyTask) }
+}
+
+
