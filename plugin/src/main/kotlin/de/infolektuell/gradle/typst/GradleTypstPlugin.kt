@@ -77,7 +77,6 @@ class GradleTypstPlugin : Plugin<Project> {
               task.onlyIf { format.enabled.get() }
               task.onlyIf { s.documents.get().isNotEmpty() }
               task.documents.set(documentFilesProvider)
-              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
               task.pdfStandard.set(format.standard)
               s.includes.forEach { include ->
                   task.variables.putAll(include.inputs)
@@ -89,10 +88,11 @@ class GradleTypstPlugin : Plugin<Project> {
               task.includes.from(s.files, convertedImagesProvider)
               task.fontDirectories.add(s.fonts)
               task.destinationDir.convention(s.destinationDir.dir("pdf"))
+              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
           }
           project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
               task.onlyIf { s.format.pdf.merged.isPresent }
-              task.documents.set(typstTask.flatMap { it.compiled })
+              task.documents.set(typstTask.flatMap { it.destinationDir.zip(it.targetFilenames) { dir, names -> names.map { name -> dir.file(name)}} })
               task.merged.convention(s.format.pdf.merged.zip(s.destinationDir) { name, dir -> dir.file("$name.pdf") })
           }
           project.tasks.register(s.pngCompileTaskName, TypstCompileTask::class.java) { task ->

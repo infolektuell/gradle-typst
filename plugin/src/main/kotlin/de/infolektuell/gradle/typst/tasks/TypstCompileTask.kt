@@ -2,13 +2,18 @@ package de.infolektuell.gradle.typst.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.*
-import org.gradle.api.provider.*
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
 import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
+import java.nio.file.Files
 import javax.inject.Inject
+import kotlin.io.path.extension
 
 abstract class TypstCompileTask @Inject constructor(private val fileSystemOperations: FileSystemOperations, private val executor: WorkerExecutor) : DefaultTask() {
     @get:InputFiles
@@ -32,6 +37,8 @@ abstract class TypstCompileTask @Inject constructor(private val fileSystemOperat
         }
 
         override fun execute() {
+            val targetPath = parameters.target.get().asFile.toPath()
+            Files.createDirectories(targetPath.parent)
             execOperations.exec { action ->
                 action.executable(parameters.executable.get())
                 action.args("compile")
@@ -54,7 +61,7 @@ abstract class TypstCompileTask @Inject constructor(private val fileSystemOperat
                 if (parameters.ppi.isPresent) action.args("--ppi", parameters.ppi.get().toString())
                 if (parameters.pdfStandard.isPresent) action.args("--pdf-standard", parameters.pdfStandard.get())
                 action.args(parameters.document.get().asFile.absolutePath)
-                    .args(parameters.target.asFile.get().absolutePath)
+                    .args(parameters.target.get().asFile.absolutePath)
             }
         }
     }
@@ -103,10 +110,6 @@ abstract class TypstCompileTask @Inject constructor(private val fileSystemOperat
     @get:OutputDirectory
     abstract val destinationDir: DirectoryProperty
 
-    @get:OutputFiles
-    val compiled: Provider<List<RegularFile>> =
-        targetFilenames.zip(destinationDir) { docs, dir -> docs.map { dir.file(it) } }
-
     @TaskAction
     protected fun compile() {
         fileSystemOperations.delete { spec ->
@@ -114,8 +117,9 @@ abstract class TypstCompileTask @Inject constructor(private val fileSystemOperat
                 it.include("**/*.png", "**/*.svg")
             })
         }
+        val targetFilePaths: List<RegularFile> = targetFilenames.get().map { destinationDir.file(it).get() }
         val queue = executor.noIsolation()
-        documents.get().zip(compiled.get()) { document, targetFile ->
+        documents.get().zip(targetFilePaths) { document, targetFile ->
             queue.submit(TypstAction::class.java) { params ->
                 params.executable.set(executable)
                 params.packagePath.set(packagePath)
