@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "2.1.20"
+    kotlin("jvm") version "2.2.0"
     signing
     id("com.gradle.plugin-publish") version "1.3.1"
 }
@@ -34,8 +34,8 @@ repositories {
 
 dependencies {
     implementation("org.tukaani:xz:1.10")
-    implementation("org.json:json:20240303")
-    implementation("org.apache.pdfbox:pdfbox:3.0.3")
+    implementation("org.json:json:20250517")
+    implementation("org.apache.pdfbox:pdfbox:3.0.5")
     // Use the Kotlin JUnit 5 integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 
