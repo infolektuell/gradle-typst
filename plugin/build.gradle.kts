@@ -4,13 +4,17 @@ plugins {
     id("com.gradle.plugin-publish") version "1.3.1"
 }
 
+val releaseVersion = releaseVersion()
+val releaseNotes = releaseNotes()
+version = releaseVersion.get()
+
 gradlePlugin {
     website = "https://github.com/infolektuell/gradle-typst"
     vcsUrl = "https://github.com/infolektuell/gradle-typst.git"
-    plugins.create("typstPlugin") {
+    plugins.register("typstPlugin") {
         id = "de.infolektuell.typst"
         displayName = "Typst Plugin"
-        description = "Generates PDF documents using the Typst markup system"
+        description = releaseNotes.get()
         tags = listOf("Typst", "PDF", "typesetting")
         implementationClass = "de.infolektuell.gradle.typst.GradleTypstPlugin"
     }
@@ -67,4 +71,14 @@ tasks.named<Task>("check") {
 tasks.named<Test>("test") {
     // Use JUnit Jupiter for unit tests.
     useJUnitPlatform()
+}
+
+fun releaseVersion(): Provider<String> {
+    val releaseVersionFile = rootProject.layout.projectDirectory.file("release/version.txt")
+    return providers.fileContents(releaseVersionFile).asText.map(String::trim)
+}
+
+fun releaseNotes(): Provider<String> {
+    val releaseNotesFile = rootProject.layout.projectDirectory.file("release/changes.md")
+    return providers.fileContents(releaseNotesFile).asText.map(String::trim)
 }
