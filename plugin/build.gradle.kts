@@ -1,8 +1,8 @@
 plugins {
-    kotlin("jvm") version "2.2.0"
+    kotlin("jvm") version "2.2.21"
     id("org.jetbrains.dokka") version "2.1.0-Beta"
     signing
-    id("com.gradle.plugin-publish") version "1.3.1"
+    id("com.gradle.plugin-publish") version "2.0.0"
 }
 
 val releaseVersion = releaseVersion()
