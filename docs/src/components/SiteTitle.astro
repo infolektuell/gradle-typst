@@ -1,0 +1,9 @@
+---
+import Default from '@astrojs/starlight/components/SiteTitle.astro'
+import { Badge } from '@astrojs/starlight/components'
+import plugin from '@lib/gradle'
+const { version, href } = plugin
+---
+
+<Default><slot /></Default>
+<a class="site-title sl-flex" {href} target="_blank"><Badge text={version} variant="success" size="large" /></a>

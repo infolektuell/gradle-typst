@@ -1,0 +1,281 @@
+---
+title: Minimal Setup Guide
+description: A getting started guide to setup the Gradle Typst plugin with commandline interface and text editor
+sidebar:
+  order: 2
+---
+
+In this tutorial, you will setup your first project with minimalistic tooling.
+For a more graphical and integrated experience, see the [tutorial using IntelliJ](/start/setup-intellij/).
+
+## Pre-assumptions
+
+1. You can open a terminal and run command line tools.
+2. You have a lightweight text editor.
+
+These are some recommended tools that could be useful:
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+- [Windows Terminal](https://apps.microsoft.com/detail/9n0dx20hk701?hl=en-us&gl=US)
+- [Notepad++](https://notepad-plus-plus.org/)
+- [VSCodium](https://vscodium.com/)
+
+</TabItem>
+
+<TabItem label="macOS">
+
+- Terminal comes pre-installed: Applications -> Utilities -> Terminal
+- [TextMate](https://macromates.com/)
+- [VSCodium](https://vscodium.com/)
+
+</TabItem>
+</Tabs>
+
+## Java Setup
+
+First, let's ensure Java 17 or above is installed.
+Open a terminal and run this command:
+
+```shell title="Checking for JVM presence"
+java --version
+```
+
+If you get no error and output looks like this, Java is already installed and you can proceed with the next section:
+
+```ansi "java 25.0.1"
+java 25.0.1 2025-10-21 LTS
+Java(TM) SE Runtime Environment (build 25.0.1+8-LTS-27)
+Java HotSpot(TM) 64-Bit Server VM (build 25.0.1+8-LTS-27, mixed mode, sharing)
+```
+
+The simplest installation method is downloading an installer from the [official download page](https://www.oracle.com/java/technologies/downloads/).
+Finish the installation and try to run Java again.
+
+:::caution
+Version 25 might be incompatible with older projects. Version 21 is a good compromise that isn't too old and works with most projects.
+:::
+
+## Including the Plugin
+
+This will configure the project to download and use Jextract 22 which is determined from the Java toolchain.
+
+:::tip
+See the [latest version](https://plugins.gradle.org/plugin/de.infolektuell.jextract) on Gradle plugin portal.
+:::
+
+<Tabs syncKey="dsl">
+<TabItem label="Kotlin">
+
+```kts
+// build.gradle.kts
+plugins {
+    `java-library`
+    id("de.infolektuell.jextract") version "x.y.z"
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(22)
+    }
+}
+```
+
+</TabItem>
+<TabItem label="Groovy">
+
+```groovy
+// build.gradle
+plugins {
+    id 'java-library'
+    id 'de.infolektuell.jextract' version 'x.y.z'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of 22
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Adding a Library
+
+Libraries often consist of a `name.h` file and binaries like `libname.dylib` or `name.dll`.
+Put them in your source folder like this:
+
+<FileTree>
+
+- lib
+  - src
+    - main
+      - java
+        - com
+          - example
+            - greeting
+              - greeting.java
+      - native
+        - macos
+          - **libgreeting.dylib** the macOS binary
+        - windows
+          - **greeting.dll** the windows binary
+      - public
+        - **greeting.h** the header file
+  - build.gradle.kts
+- settings.gradle.kts
+
+</FileTree>
+
+## Configuring the plugin
+
+Configure the plugin via DSL extension, so it can find the library files.
+
+<Tabs syncKey="dsl">
+<TabItem label="Kotlin">
+
+```kts
+// build.gradle.kts
+jextract.libraries {
+    val greeting by registering {
+        header = layout.projectDirectory.file("src/main/public/greeting.h")
+        headerClassName = "Greeting"
+        targetPackage = "com.example.greeting"
+    }
+    sourceSets.named("main") {
+        jextract.libraries.addLater(greeting)
+    }
+}
+```
+
+</TabItem>
+<TabItem label="Groovy">
+
+```groovy
+// build.gradle
+jextract.libraries {
+    def greeting = register('greeting') {
+        header = layout.projectDirectory.file("src/main/public/greeting.h")
+        headerClassName = "Greeting"
+        targetPackage = "com.example.greeting"
+    }
+    sourceSets.named("main") {
+        jextract.libraries.addLater(greeting)
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+## Build and use
+
+Now the project is ready for its first build.
+
+<Tabs syncKey="os">
+<TabItem label="Windows">
+
+```shell title="Building the project"
+gradlew.bat build
+```
+
+</TabItem>
+<TabItem label="Linux">
+
+```shell title="Building the project"
+./gradlew build
+```
+
+</TabItem>
+</Tabs>
+
+This will result in the following output file structure:
+
+<FileTree>
+
+- .gradle
+  - **jextract** Cache for Jextract downloads and installations
+    - downloads
+    - installation
+- lib
+  - build
+    - ...
+    - generated
+      - sources
+        - jextract
+          - **greeting** the library bindings
+            - com
+              - example
+                - greeting
+                  - **Greeting.java** the bindings to import and use in Java code
+    - ...
+  - build.gradle.kts
+- settings.gradle.kts
+
+</FileTree>
+
+## Loading libraries
+
+There are mainly two approaches how the generated code can load and access the correct binaries.
+Please see this [stackoverflow question] for more details and explanation.
+
+### Automatic Loading
+
+The code searches in the OS-specific paths for the binary files and tries to load them via `system.loadLibrary`.
+The `java.library.path` property can be augmented to search in more paths or in the deployed app distribution.
+This approach is activated in a library config in the plugin DSL.
+
+<Tabs syncKey="dsl">
+<TabItem label="Kotlin">
+
+```kts {4-5}
+// build.gradle.kts
+jextract.libraries {
+    val greeting by registering {
+        useSystemLoadLibrary = true
+        libraries.add("greeting")
+    }
+}
+```
+
+</TabItem>
+<TabItem label="Groovy">
+
+```groovy {4-5}
+// build.gradle
+jextract.libraries {
+    def greeting = register('greeting') {
+        useSystemLoadLibrary = true
+        libraries.add("greeting")
+    }
+}
+```
+
+</TabItem>
+</Tabs>
+
+:::note
+`system.loadLibrary` infers the conventional name for an OS-Specific dynamic library from the base name, e.g. greeting.dll, libgreeting.dylib, or libgreeting.so.
+:::
+
+### Manual Loading
+
+Instead of configuring the libraries in the DSL, custom logic for loading the files can be implemented.
+This is a typical approach for bundling natives as resources of a jar file for more portable deployment.
+
+:::tip[Sample Project]
+The [example project] demonstrates this approach.
+:::
+
+[stackoverflow question]: https://stackoverflow.com/questions/78528174/gradle-java-include-native-library-project-panama
+[example project]: https://github.com/infolektuell/gradle-jextract/tree/main/examples/

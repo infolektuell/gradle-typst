@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.2.0"
+    id("org.jetbrains.dokka") version "2.1.0-Beta"
     signing
     id("com.gradle.plugin-publish") version "1.3.1"
 }
@@ -81,4 +82,25 @@ fun releaseVersion(): Provider<String> {
 fun releaseNotes(): Provider<String> {
     val releaseNotesFile = rootProject.layout.projectDirectory.file("release/changes.md")
     return providers.fileContents(releaseNotesFile).asText.map(String::trim)
+}
+
+dokka {
+    moduleName = "Gradle Typst Plugin"
+    dokkaPublications.html {
+        outputDirectory = rootProject.layout.projectDirectory.dir("docs/public/reference")
+        suppressInheritedMembers = true
+        failOnWarning = true
+    }
+    dokkaSourceSets.main {
+        sourceLink {
+            localDirectory = layout.projectDirectory.file("src/main/kotlin").asFile
+            remoteUrl("https://github.com/infolektuell/gradle-typst/tree/main/plugin/src/main/kotlin")
+            remoteLineSuffix.set("#L")
+        }
+    }
+    pluginsConfiguration.html {
+        // customStyleSheets.from("styles.css")
+        // customAssets.from("logo.png")
+        footerMessage.set("(c) infolektuell")
+    }
 }

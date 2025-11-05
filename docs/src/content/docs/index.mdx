@@ -1,0 +1,40 @@
+---
+title: Welcome to Gradle Typst
+description: Gradle plugin that generates PDF files using the Typst markup system.
+template: splash
+hero:
+  tagline: Beautiful documents made easy and stable!
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Quick Start
+      link: ./start/setup/
+      icon: right-arrow
+    - text: Latest Release
+      link: https://plugins.gradle.org/plugin/de.infolektuell.typst
+      icon: seti:gradle
+      variant: minimal
+---
+import plugin from '@lib/gradle'
+
+## Next steps
+
+<CardGrid stagger>
+  <LinkCard href="./start/setup/" title="Quick Start" description="Setup your first project by following this step-by-step guide" />
+  <LinkCard
+    href="https://github.com/infolektuell/gradle-typst/tree/main/examples/"
+    title="Example project"
+    description="Learn to use the plugin in a minimal sample project"
+  />
+  <LinkCard
+    icon="seti:gradle"
+    href={plugin.href}
+    title="Latest release"
+    description="See the latest release on Gradle Plugin Portal"
+  />
+  <LinkCard
+    href="https://github.com/infolektuell/gradle-typst"
+    title="GitHub Repository"
+    description="Explore the source code, create issues, or contribute"
+  />
+</CardGrid>
