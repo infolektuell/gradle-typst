@@ -41,9 +41,9 @@ dependencies {
     implementation("org.tukaani:xz:1.10")
     implementation("org.json:json:20250517")
     implementation("org.apache.pdfbox:pdfbox:3.0.5")
-    // Use the Kotlin JUnit 5 integration.
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 
+    // Use JUnit Jupiter for testing.
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
