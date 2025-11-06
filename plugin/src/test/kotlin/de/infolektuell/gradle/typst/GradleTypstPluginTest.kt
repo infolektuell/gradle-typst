@@ -4,8 +4,8 @@
 package de.infolektuell.gradle.typst
 
 import org.gradle.testfixtures.ProjectBuilder
-import kotlin.test.Test
-import kotlin.test.assertNotNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertNotNull
 
 /**
  * A simple unit test for the 'org.example.greeting' plugin.

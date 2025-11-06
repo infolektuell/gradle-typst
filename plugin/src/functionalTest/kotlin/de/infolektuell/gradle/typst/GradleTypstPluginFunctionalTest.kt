@@ -4,8 +4,8 @@
 package de.infolektuell.gradle.typst
 
 import java.io.File
-import kotlin.test.assertContains
-import kotlin.test.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.io.TempDir
 import kotlin.io.path.createParentDirectories
@@ -48,6 +48,6 @@ class GradleTypstPluginFunctionalTest {
         runner.withPluginClasspath()
         runner.withProjectDir(projectDir)
         val result = runner.build()
-        assertContains(result.output, "SUCCESSFUL")
+        assertTrue(result.output.contains("SUCCESSFUL"))
     }
 }
