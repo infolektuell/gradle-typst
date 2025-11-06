@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.dokka") version "2.1.0-Beta"
     signing
     id("com.gradle.plugin-publish") version "2.0.0"
+    id("prepare-typst-releases")
 }
 
 val releaseVersion = releaseVersion()
