@@ -7,13 +7,14 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 abstract class TypstExtension {
-  abstract val sourceSets: NamedDomainObjectContainer<SourceSetHandler>
+    abstract val sourceSets: NamedDomainObjectContainer<SourceSetHandler>
     abstract val executable: RegularFileProperty
-  abstract val version: Property<String>
+    abstract val version: Property<String>
     abstract val creationTimestamp: Property<String>
-  abstract val localPackages: DirectoryProperty
-  abstract val excludePatterns: ListProperty<String>
-  companion object {
-    const val EXTENSION_NAME = "typst"
-  }
+    abstract val localPackages: DirectoryProperty
+    abstract val excludePatterns: ListProperty<String>
+
+    companion object {
+        const val EXTENSION_NAME = "typst"
+    }
 }

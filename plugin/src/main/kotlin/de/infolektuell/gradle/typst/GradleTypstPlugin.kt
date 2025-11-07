@@ -17,20 +17,22 @@ class GradleTypstPlugin : Plugin<Project> {
         val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
         extension.version.convention(project.providers.provider { GithubClient().findLatestTag("typst", "typst") })
         val assetProvider = extension.version.map { store.asset(it) }
-        val downloadDirectoryProvider: Provider<Directory> = project.layout.projectDirectory.dir(project.providers.systemProperty("java.io.tmpdir").map { "${it}/gradle_download" })
-        val typstDirectoryProvider = downloadDirectoryProvider.zip(assetProvider) { dir, asset -> dir.dir("typst-${asset.tag}" )}
+        val downloadDirectoryProvider: Provider<Directory> = project.layout.projectDirectory.dir(
+            project.providers.systemProperty("java.io.tmpdir").map { "${it}/gradle_download" })
+        val typstDirectoryProvider =
+            downloadDirectoryProvider.zip(assetProvider) { dir, asset -> dir.dir("typst-${asset.tag}") }
         val downloadTask = project.tasks.register("downloadTypst", DownloadTask::class.java) { task ->
-          task.asset.convention(assetProvider)
-          task.target.convention(typstDirectoryProvider.zip(assetProvider) { dir, asset -> dir.file("download/${asset.filename}") })
-      }
+            task.asset.convention(assetProvider)
+            task.target.convention(typstDirectoryProvider.zip(assetProvider) { dir, asset -> dir.file("download/${asset.filename}") })
+        }
         val extractTask = project.tasks.register("extractTypst", ExtractTask::class.java) { task ->
             task.source.convention(downloadTask.flatMap { it.target })
             task.target.convention(typstDirectoryProvider.map { dir -> dir.dir("install") })
         }
         val executableProvider = extractTask.flatMap { it.target }
             .map { dir ->
-            dir.asFileTree.matching { spec -> spec.include("**/" + store.executableName) }.singleFile
-        }
+                dir.asFileTree.matching { spec -> spec.include("**/" + store.executableName) }.singleFile
+            }
         extension.executable.convention(project.layout.file(executableProvider))
         if (store.hasPackages) extension.localPackages.convention(project.layout.projectDirectory.dir(store.packageDir.toString()))
         extension.sourceSets.configureEach { s ->
@@ -53,102 +55,112 @@ class GradleTypstPlugin : Plugin<Project> {
             s.format.svg.enabled.convention(false)
             s.format.svg.filenameTemplate.convention("{p}-of-{t}.svg")
         }
-      project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
-          task.executable.convention(extension.executable)
-          task.packagePath.set(extension.localPackages)
-          task.packageCachePath.set(store.packageCacheDir.toString())
-          task.root.convention(project.layout.projectDirectory.asFile.absolutePath)
-          task.creationTimestamp.convention(extension.creationTimestamp)
-          task.useSystemFonts.convention(false)
-      }
-      extension.sourceSets.all { s ->
-          val title = s.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-          val convertImagesTask = project.tasks.register(s.convertImagesTaskName, ConvertImagesTask::class.java) { task ->
-              task.onlyIf { task.source.get().asFile.exists() }
-              task.source.convention(s.images.source)
-              task.target.convention(s.images.converted)
-              task.format.convention("png")
-              task.quality.convention(100)
-          }
-          val documentFilesProvider = s.documents.zip(s.root) { docs, root -> docs.map { root.file("typst/$it.typ") } }
-          val convertedImagesProvider = convertImagesTask.flatMap { it.target }
-          val pdfTask = project.tasks.register(s.pdfCompileTaskName, TypstCompileTask::class.java) { task ->
-              val format = s.format.pdf
-              task.onlyIf { format.enabled.get() }
-              task.onlyIf { s.documents.get().isNotEmpty() }
-              task.documents.set(documentFilesProvider)
-              task.pdfStandard.set(format.standard)
-              s.includes.forEach { include ->
-                  task.variables.putAll(include.inputs)
-                  task.includes.from(include.files)
-                  task.includes.from(project.tasks.named(include.convertImagesTaskName))
-                  task.fontDirectories.add(include.fonts)
-              }
-              task.variables.putAll(s.inputs)
-              task.includes.from(s.files, convertedImagesProvider)
-              task.fontDirectories.add(s.fonts)
-              task.destinationDir.convention(s.destinationDir.dir("pdf"))
-              task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
-          }
-          val pdfOutputProvider = pdfTask.flatMap { task ->
-              task.destinationDir.zip(s.documents) { dir, docs ->
-                  docs.associateWith  { dir.file("$it.${s.format.pdf.extension}") }
-              }
-          }
-          s.format.pdf.output.convention(pdfOutputProvider).disallowChanges()
-          project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
-              task.onlyIf { s.format.pdf.merged.isPresent }
-              task.documents.set(pdfTask.flatMap { it.destinationDir.zip(it.targetFilenames) { dir, names -> names.map { name -> dir.file(name)}} })
-              task.merged.convention(s.format.pdf.merged.zip(s.destinationDir) { name, dir -> dir.file("$name.pdf") })
-          }
-          val pngTask = project.tasks.register(s.pngCompileTaskName, TypstCompileTask::class.java) { task ->
-              val format = s.format.png
-              task.onlyIf { format.enabled.get() }
-              task.onlyIf { s.documents.get().isNotEmpty() }
-              task.documents.set(documentFilesProvider)
-              task.ppi.convention(format.ppi)
-              s.includes.forEach { include ->
-                  task.variables.putAll(include.inputs)
-                  task.includes.from(include.files)
-                  task.includes.from(project.tasks.named(include.convertImagesTaskName))
-                  task.fontDirectories.add(include.fonts)
-              }
-              task.variables.putAll(s.inputs)
-              task.includes.from(s.files, convertedImagesProvider)
-              task.fontDirectories.add(s.fonts)
-              task.destinationDir.convention(s.destinationDir.dir("png"))
-              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
-          }
-          val pngOutputProvider = pngTask.flatMap { task ->
-              task.destinationDir.zip(s.documents) { dir, docs ->
-                  docs.associateWith  { dir.dir(it) }
-              }
-          }
-          s.format.png.output.convention(pngOutputProvider).disallowChanges()
-          val svgTask = project.tasks.register(s.svgCompileTaskName, TypstCompileTask::class.java) { task ->
-              val format = s.format.svg
-              task.onlyIf { format.enabled.get() }
-              task.onlyIf { s.documents.get().isNotEmpty() }
-              task.documents.set(documentFilesProvider)
-              s.includes.forEach { include ->
-                  task.variables.putAll(include.inputs)
-                  task.includes.from(include.files)
-                  task.includes.from(project.tasks.named(include.convertImagesTaskName))
-                  task.fontDirectories.add(include.fonts)
-              }
-              task.variables.putAll(s.inputs)
-              task.includes.from(s.files, convertedImagesProvider)
-              task.fontDirectories.add(s.fonts)
-              task.destinationDir.convention(s.destinationDir.dir("svg"))
-              task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
-          }
-          val svgOutputProvider = svgTask.flatMap { task ->
-              task.destinationDir.zip(s.documents) { dir, docs ->
-                  docs.associateWith  { dir.dir(it) }
-              }
-          }
-          s.format.svg.output.convention(svgOutputProvider).disallowChanges()
-      }
+        project.tasks.withType(TypstCompileTask::class.java).configureEach { task ->
+            task.executable.convention(extension.executable)
+            task.packagePath.set(extension.localPackages)
+            task.packageCachePath.set(store.packageCacheDir.toString())
+            task.root.convention(project.layout.projectDirectory.asFile.absolutePath)
+            task.creationTimestamp.convention(extension.creationTimestamp)
+            task.useSystemFonts.convention(false)
+        }
+        extension.sourceSets.all { s ->
+            val title = s.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            val convertImagesTask =
+                project.tasks.register(s.convertImagesTaskName, ConvertImagesTask::class.java) { task ->
+                    task.onlyIf { task.source.get().asFile.exists() }
+                    task.source.convention(s.images.source)
+                    task.target.convention(s.images.converted)
+                    task.format.convention("png")
+                    task.quality.convention(100)
+                }
+            val documentFilesProvider =
+                s.documents.zip(s.root) { docs, root -> docs.map { root.file("typst/$it.typ") } }
+            val convertedImagesProvider = convertImagesTask.flatMap { it.target }
+            val pdfTask = project.tasks.register(s.pdfCompileTaskName, TypstCompileTask::class.java) { task ->
+                val format = s.format.pdf
+                task.onlyIf { format.enabled.get() }
+                task.onlyIf { s.documents.get().isNotEmpty() }
+                task.documents.set(documentFilesProvider)
+                task.pdfStandard.set(format.standard)
+                s.includes.forEach { include ->
+                    task.variables.putAll(include.inputs)
+                    task.includes.from(include.files)
+                    task.includes.from(project.tasks.named(include.convertImagesTaskName))
+                    task.fontDirectories.add(include.fonts)
+                }
+                task.variables.putAll(s.inputs)
+                task.includes.from(s.files, convertedImagesProvider)
+                task.fontDirectories.add(s.fonts)
+                task.destinationDir.convention(s.destinationDir.dir("pdf"))
+                task.targetFilenames.set(s.documents.map { docs -> docs.map { "$it.${format.extension}" } })
+            }
+            val pdfOutputProvider = pdfTask.flatMap { task ->
+                task.destinationDir.zip(s.documents) { dir, docs ->
+                    docs.associateWith { dir.file("$it.${s.format.pdf.extension}") }
+                }
+            }
+            s.format.pdf.output.convention(pdfOutputProvider).disallowChanges()
+            project.tasks.register("merge${title}Typst", MergePDFTask::class.java) { task ->
+                task.onlyIf { s.format.pdf.merged.isPresent }
+                task.documents.set(pdfTask.flatMap {
+                    it.destinationDir.zip(it.targetFilenames) { dir, names ->
+                        names.map { name ->
+                            dir.file(
+                                name
+                            )
+                        }
+                    }
+                })
+                task.merged.convention(s.format.pdf.merged.zip(s.destinationDir) { name, dir -> dir.file("$name.pdf") })
+            }
+            val pngTask = project.tasks.register(s.pngCompileTaskName, TypstCompileTask::class.java) { task ->
+                val format = s.format.png
+                task.onlyIf { format.enabled.get() }
+                task.onlyIf { s.documents.get().isNotEmpty() }
+                task.documents.set(documentFilesProvider)
+                task.ppi.convention(format.ppi)
+                s.includes.forEach { include ->
+                    task.variables.putAll(include.inputs)
+                    task.includes.from(include.files)
+                    task.includes.from(project.tasks.named(include.convertImagesTaskName))
+                    task.fontDirectories.add(include.fonts)
+                }
+                task.variables.putAll(s.inputs)
+                task.includes.from(s.files, convertedImagesProvider)
+                task.fontDirectories.add(s.fonts)
+                task.destinationDir.convention(s.destinationDir.dir("png"))
+                task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
+            }
+            val pngOutputProvider = pngTask.flatMap { task ->
+                task.destinationDir.zip(s.documents) { dir, docs ->
+                    docs.associateWith { dir.dir(it) }
+                }
+            }
+            s.format.png.output.convention(pngOutputProvider).disallowChanges()
+            val svgTask = project.tasks.register(s.svgCompileTaskName, TypstCompileTask::class.java) { task ->
+                val format = s.format.svg
+                task.onlyIf { format.enabled.get() }
+                task.onlyIf { s.documents.get().isNotEmpty() }
+                task.documents.set(documentFilesProvider)
+                s.includes.forEach { include ->
+                    task.variables.putAll(include.inputs)
+                    task.includes.from(include.files)
+                    task.includes.from(project.tasks.named(include.convertImagesTaskName))
+                    task.fontDirectories.add(include.fonts)
+                }
+                task.variables.putAll(s.inputs)
+                task.includes.from(s.files, convertedImagesProvider)
+                task.fontDirectories.add(s.fonts)
+                task.destinationDir.convention(s.destinationDir.dir("svg"))
+                task.targetFilenames.set(s.documents.zip(format.filenameTemplate) { docs, template -> docs.map { "$it/${template}" } })
+            }
+            val svgOutputProvider = svgTask.flatMap { task ->
+                task.destinationDir.zip(s.documents) { dir, docs ->
+                    docs.associateWith { dir.dir(it) }
+                }
+            }
+            s.format.svg.output.convention(svgOutputProvider).disallowChanges()
+        }
         val typstCompileTask = project.tasks.register("compileTypst") { task ->
             task.group = "build"
             task.description = "Compile typst documents"
@@ -159,7 +171,8 @@ class GradleTypstPlugin : Plugin<Project> {
             project.tasks.named(BasePlugin.ASSEMBLE_TASK_NAME) { it.dependsOn(typstCompileTask) }
         }
     }
-  companion object {
-    const val PLUGIN_NAME = "de.infolektuell.typst"
-  }
+
+    companion object {
+        const val PLUGIN_NAME = "de.infolektuell.typst"
+    }
 }

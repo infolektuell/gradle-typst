@@ -13,9 +13,11 @@ import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import java.nio.file.Files
 import javax.inject.Inject
-import kotlin.io.path.extension
 
-abstract class TypstCompileTask @Inject constructor(private val fileSystemOperations: FileSystemOperations, private val executor: WorkerExecutor) : DefaultTask() {
+abstract class TypstCompileTask @Inject constructor(
+    private val fileSystemOperations: FileSystemOperations,
+    private val executor: WorkerExecutor
+) : DefaultTask() {
     @get:InputFiles
     abstract val includes: ConfigurableFileCollection
 

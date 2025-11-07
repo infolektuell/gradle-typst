@@ -9,18 +9,19 @@ import java.nio.charset.Charset
 import javax.inject.Inject
 
 abstract class GitCommitDateValueSource @Inject constructor(private val execOperations: ExecOperations) :
-  ValueSource<String, GitCommitDateValueSource.Parameters> {
-  interface Parameters : ValueSourceParameters {
-    val revision: Property<String>
-  }
-    override fun obtain(): String {
-    return ByteArrayOutputStream().use { s ->
-      execOperations.exec { spec ->
-        spec.executable("git")
-        spec.args("--no-pager", "show", "-s", "--format=%ct", parameters.revision.getOrElse("HEAD"))
-        spec.standardOutput = s
-      }
-      s.toString(Charset.defaultCharset()).trim()
+    ValueSource<String, GitCommitDateValueSource.Parameters> {
+    interface Parameters : ValueSourceParameters {
+        val revision: Property<String>
     }
-  }
+
+    override fun obtain(): String {
+        return ByteArrayOutputStream().use { s ->
+            execOperations.exec { spec ->
+                spec.executable("git")
+                spec.args("--no-pager", "show", "-s", "--format=%ct", parameters.revision.getOrElse("HEAD"))
+                spec.standardOutput = s
+            }
+            s.toString(Charset.defaultCharset()).trim()
+        }
+    }
 }
