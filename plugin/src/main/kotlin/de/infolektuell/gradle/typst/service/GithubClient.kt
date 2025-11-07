@@ -15,6 +15,7 @@ class GithubClient {
     data class Asset(val owner: String, val repo: String, val tag: String, val filename: String) : Serializable {
         val url: URI get() = URI.create("https://github.com/$owner/$repo/releases/download/$tag/$filename")
     }
+
     fun downloadAsset(asset: Asset): InputStream {
         val client: HttpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -28,6 +29,7 @@ class GithubClient {
         if (response.statusCode() != 200) throw GradleException("Downloading from ${asset.url} failed with status code ${response.statusCode()}.")
         return response.body()
     }
+
     fun findLatestTag(owner: String, repo: String): String {
         val client: HttpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build()
         val source = URI.create("https://api.github.com/repos/${owner}/${repo}/releases/latest")

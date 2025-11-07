@@ -21,9 +21,10 @@ abstract class SourceSetHandler @Inject constructor(objects: ObjectFactory) : Na
     fun includes(action: Action<in NamedDomainObjectSet<SourceSetHandler>>) {
         action.execute(includes)
     }
+
     val root: DirectoryProperty = objects.directoryProperty()
     val excludePatterns: ListProperty<String> = objects.listProperty(String::class.java)
-    val files: Provider<FileTree> = root.zip(excludePatterns) { r, x -> r.asFileTree.matching { it.exclude(x) }}
+    val files: Provider<FileTree> = root.zip(excludePatterns) { r, x -> r.asFileTree.matching { it.exclude(x) } }
     abstract val destinationDir: DirectoryProperty
     abstract val documents: ListProperty<String>
     abstract val inputs: MapProperty<String, String>
@@ -33,15 +34,17 @@ abstract class SourceSetHandler @Inject constructor(objects: ObjectFactory) : Na
     fun images(action: Action<in ImageHandler>) {
         action.execute(images)
     }
+
     val format: OutputFormatHandler = objects.newInstance(OutputFormatHandler::class.java)
     fun format(action: Action<in OutputFormatHandler>) {
         action.execute(format)
     }
 
-  fun addSourceSet(sourceSet: SourceSetHandler): SourceSetHandler {
-    includes.add(sourceSet)
-      return this
-  }
+    fun addSourceSet(sourceSet: SourceSetHandler): SourceSetHandler {
+        includes.add(sourceSet)
+        return this
+    }
+
     fun addSourceSet(sourceSet: Provider<SourceSetHandler>): SourceSetHandler {
         includes.addLater(sourceSet)
         return this

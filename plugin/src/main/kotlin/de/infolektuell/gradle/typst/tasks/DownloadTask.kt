@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption
 abstract class DownloadTask : DefaultTask() {
     @get:Input
     abstract val asset: Property<GithubClient.Asset>
+
     @get:OutputFile
     abstract val target: RegularFileProperty
 
