@@ -7,11 +7,12 @@ import java.util.regex.Pattern
 class VersionFormatException(str: String) : RuntimeException("Failed to parse version from $str, invalid semver string")
 
 /**
- * Represents a release version that resembles to the semantic version standard
+ * Represents a release version that resembles to the semantic version standard, but without prerelease or build information
  */
 data class Version(
-    val major: Int, val minor: Int, val patch: Int, val build: String? = null
+    val major: Int, val minor: Int, val patch: Int
 ) : Serializable, Comparable<Version> {
+    override fun toString() = "$major.$minor.$patch"
     override fun compareTo(other: Version): Int {
         if (major != other.major) return major.compareTo(other.major)
         if (minor != other.minor) return minor.compareTo(other.minor)

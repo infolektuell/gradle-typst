@@ -33,7 +33,7 @@ class TypstDataStore {
 
     /** Creates a GitHub release asset for a given Typst [version] reading from a given [config] file */
     fun asset(version: Version, config: Path): DownloadClient.Asset {
-        val tag = version.let { "v${it.major}.${it.minor}.${it.patch}" }
+        val tag = "v$version"
         val prefix = "typst.$tag.$arch.$os"
         val data = properties.load(config)
         val url = data.getProperty("$prefix.url")
