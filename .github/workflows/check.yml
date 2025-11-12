@@ -14,22 +14,22 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   validate:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
-          java-version: 22
+          distribution: temurin
+          java-version-file: .tool-versions
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          cache-encryption-key: "${{secrets.GRADLE_ENCRYPTION_KEY}}"
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
       - name: Validate Plugin
         env:
           ORG_GRADLE_PROJECT_signingKeyId: "${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEYID }}"
