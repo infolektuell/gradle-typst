@@ -1,7 +1,6 @@
 package de.infolektuell.gradle.typst
 
 import de.infolektuell.gradle.typst.extensions.TypstExtension
-import de.infolektuell.gradle.typst.service.GithubClient
 import de.infolektuell.gradle.typst.service.TypstDataStore
 import de.infolektuell.gradle.typst.tasks.*
 import org.gradle.api.Plugin
@@ -15,7 +14,7 @@ class GradleTypstPlugin : Plugin<Project> {
     override fun apply(project: Project) {
         val store = TypstDataStore()
         val extension = project.extensions.create(TypstExtension.EXTENSION_NAME, TypstExtension::class.java)
-        extension.version.convention(project.providers.provider { GithubClient().findLatestTag("typst", "typst") })
+        extension.version.convention("v0.14.0")
         val assetProvider = extension.version.map { store.asset(it) }
         val downloadDirectoryProvider: Provider<Directory> = project.layout.projectDirectory.dir(
             project.providers.systemProperty("java.io.tmpdir").map { "${it}/gradle_download" })

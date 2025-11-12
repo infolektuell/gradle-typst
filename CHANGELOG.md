@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- If no Typst version is configured in the build, the plugin uses a hardcoded Typst version instead of the latest release.
+  This improves build reproducibility and stability (no network request during configuration and no dynamically changing Typst version).
+  If the latest release differs from the configured one, this is reported without failing the build.
+  The plugin's version convention might be updated when new Typst releases are available.
 - Conventions have been updated:
   - Uses Typst v0.14.0
   - Includes webp and pdf in the supported image formats
