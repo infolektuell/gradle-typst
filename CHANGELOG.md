@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Because Typst is adding support for more image formats, image formats that don't need to be converted become configurable per source set.
 - Output format for converted images is configurable per source set.
+- Errors from executing command line tools are handled more gracefully via Gradle's problem reporting API:
+  - If imagemagick couldn't be found, an error is reported, but the build doesn't fail and all images will be copied instead of converted.
 
 ### Changed
 
