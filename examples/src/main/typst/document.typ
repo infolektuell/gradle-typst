@@ -3,6 +3,6 @@
 
 = Test document #gitHash
 
-#image(convertedImages + "/schweinestall.png")
+#image(convertedImages + "/schweinestall.webp")
 
 #lorem(5000)

@@ -21,7 +21,7 @@ val timestamp = providers.of(GitCommitDateValueSource::class) {
 }
 
 typst {
-    version = "v0.13.1"
+    version = "v0.14.0"
     creationTimestamp = timestamp.get()
 }
 
