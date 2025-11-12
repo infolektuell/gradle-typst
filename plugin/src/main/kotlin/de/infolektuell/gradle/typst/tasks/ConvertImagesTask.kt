@@ -6,6 +6,7 @@ import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.file.FileType
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.SetProperty
 import org.gradle.api.tasks.*
 import org.gradle.process.ExecOperations
 import org.gradle.work.ChangeType
@@ -46,10 +47,13 @@ abstract class ConvertImagesTask @Inject constructor(
     abstract val source: DirectoryProperty
 
     @get:Input
-    abstract val format: Property<String>
+    abstract val outputFormat: Property<String>
 
     @get:Input
     abstract val quality: Property<Int>
+
+    @get:Input
+    abstract val passthroughFormats: SetProperty<String>
 
     @get:OutputDirectory
     abstract val target: DirectoryProperty
@@ -60,11 +64,11 @@ abstract class ConvertImagesTask @Inject constructor(
             if (!file.isDirectory) return@visit
             target.dir(file.relativePath.pathString).get().asFile.mkdirs()
         }
-        val supportedFormats = setOf("png", "jpg", "gif", "svg")
+        val supportedFormats = passthroughFormats.get()
         val queue = executor.noIsolation()
         inputs.getFileChanges(source).forEach { change ->
             if (change.fileType == FileType.DIRECTORY) return@forEach
-            val targetFile = target.zip(format) { t, f ->
+            val targetFile = target.zip(outputFormat) { t, f ->
                 val fileName = change.normalizedPath.replaceAfterLast('.', f)
                 t.file(fileName)
             }
@@ -84,7 +88,7 @@ abstract class ConvertImagesTask @Inject constructor(
             queue.submit(MagickAction::class.java) { params ->
                 params.source.set(change.file)
                 params.target.set(targetFile)
-                params.format.set(format)
+                params.format.set(outputFormat)
                 params.quality.set(quality)
             }
         }

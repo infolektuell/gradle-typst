@@ -76,5 +76,6 @@ class TypstDataStore {
     val packageDir: Path = dataDir.resolve("typst/packages")
     val packageCacheDir: Path = cacheDir.resolve("typst/packages")
     val hasPackages: Boolean get() = Files.exists(packageDir)
+    val supportedImageFormats = setOf("png", "jpg", "jpeg", "gif", "svg", "webp")
     fun asset(tag: String) = GithubClient.Asset("typst", "typst", tag, "typst-$arch-$os")
 }

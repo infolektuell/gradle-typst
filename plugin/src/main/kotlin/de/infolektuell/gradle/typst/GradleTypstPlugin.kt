@@ -42,6 +42,8 @@ class GradleTypstPlugin : Plugin<Project> {
             s.fonts.convention(s.root.dir("fonts"))
             s.images.source.convention(s.root.dir("images"))
             s.images.converted.convention(project.layout.buildDirectory.dir("generated/typst/images/${s.name}"))
+            s.images.passthroughFormats.convention(store.supportedImageFormats)
+            s.images.outputFormat.convention("png")
             val relativizedImages = s.images.converted.map { images ->
                 val root = project.layout.projectDirectory.asFile.toPath()
                 val target = images.asFile.toPath()
@@ -70,8 +72,9 @@ class GradleTypstPlugin : Plugin<Project> {
                     task.onlyIf { task.source.get().asFile.exists() }
                     task.source.convention(s.images.source)
                     task.target.convention(s.images.converted)
-                    task.format.convention("png")
                     task.quality.convention(100)
+                    task.passthroughFormats.convention(s.images.passthroughFormats)
+                    task.outputFormat.convention(s.images.outputFormat)
                 }
             val documentFilesProvider =
                 s.documents.zip(s.root) { docs, root -> docs.map { root.file("typst/$it.typ") } }

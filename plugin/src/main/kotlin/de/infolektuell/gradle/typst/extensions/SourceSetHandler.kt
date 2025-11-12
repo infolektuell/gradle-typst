@@ -40,13 +40,13 @@ abstract class SourceSetHandler @Inject constructor(objects: ObjectFactory) : Na
         action.execute(format)
     }
 
-    fun addSourceSet(sourceSet: SourceSetHandler): SourceSetHandler {
-        includes.add(sourceSet)
-        return this
-    }
+    fun addSourceSet(sourceSet: SourceSetHandler): SourceSetHandler =
+        apply {
+            includes.add(sourceSet)
+        }
 
-    fun addSourceSet(sourceSet: Provider<SourceSetHandler>): SourceSetHandler {
-        includes.addLater(sourceSet)
-        return this
-    }
+    fun addSourceSet(sourceSet: Provider<SourceSetHandler>): SourceSetHandler =
+        apply {
+            includes.addLater(sourceSet)
+        }
 }

@@ -6,14 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.7.1...HEAD
+
+### Added
+
+- Because Typst is adding support for more image formats, image formats that don't need to be converted become configurable per source set.
+- Output format for converted images is configurable per source set.
+
+### Changed
+
+- Conventions have been updated:
+  - Uses Typst v0.14.0
+  - Includes webp and pdf in the supported image formats
 
 ## [0.7.1] - 2025-07-06
+[0.7.1]: https://github.com/infolektuell/gradle-typst/compare/v0.7.0...v0.7.1
 
 ### Fixed
 
 - The Typst outputs carry their task dependency.
 
 ## [0.7.0] - 2025-07-04
+[0.7.0]: https://github.com/infolektuell/gradle-typst/compare/v0.6.2...v0.7.0
 
 ### Added
 
@@ -30,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - In `TypstCompileTask` the `compiled` provider has been removed, because it contains non-existing files for png and svg formats.
 
 ## [0.6.2] - 2025-06-24
+[0.6.2]: https://github.com/infolektuell/gradle-typst/compare/v0.6.1...v0.6.2
 
 ### Added
 
@@ -44,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Typst compilation tasks depend on converted images from inherited source sets.
 
 ## [0.6.1] - 2025-05-26
+[0.6.1]: https://github.com/infolektuell/gradle-typst/compare/v0.6.0...v0.6.1
 
 ### Added
 
@@ -54,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Downloaded Typst executable is also found under Windows.
 
 ## [0.6.0] - 2025-05-25
+[0.6.0]: https://github.com/infolektuell/gradle-typst/compare/v0.5.0...v0.6.0
 
 ### Added
 
@@ -87,24 +104,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The plugin properly reacts to the `base` plugin without depending on plugin application order.
 
 ## [0.5.0] - 2025-04-24
+[0.5.0]: https://github.com/infolektuell/gradle-typst/compare/v0.4.2...v0.5.0
 
 ### Added
 
 - Option to set the PDF standard
 
 ## [0.4.2] - 2025-01-09
+[0.4.2]: https://github.com/infolektuell/gradle-typst/compare/v0.4.1...v0.4.2
 
 ### Fixed
 
 - The plugin now requires at least JVM 17 to run instead of JVM 22. This solves some compatibility problems when the JVM running Gradle cannot be upgraded.
 
 ## [0.4.1] - 2024-10-31
+[0.4.1]: https://github.com/infolektuell/gradle-typst/compare/v0.4.0...v0.4.1
 
 ### Fixed
 
 - If a task input or output is a collection property (list/map/set), additional items can be manually added during configuration instead of just replacing the convention.
 
 ## [0.4.0] - 2024-10-22
+[0.4.0]: https://github.com/infolektuell/gradle-typst/compare/v0.3.0...v0.4.0
 
 ### Added
 
@@ -123,6 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `useLocalPackages` function in `TypstSourceSet`
 
 ## [0.3.0] - 2024-10-19
+[0.3.0]: https://github.com/infolektuell/gradle-typst/compare/v0.2.0...v0.3.0
 
 ### Added
 
@@ -132,12 +154,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [SOURCE_DATE_EPOCH specification]: https://reproducible-builds.org/specs/source-date-epoch/
 
 ## [0.2.0] - 2024-10-19
+[0.2.0]: https://github.com/infolektuell/gradle-typst/compare/v0.1.0...v0.2.0
 
 ### Changed
 
 - System fonts are ignored by default. For Typst versions older than 0.12.0 to run successfully, the `useSystemFonts` property of `TypstCompileTask` must be set to `true`.
 
 ## [0.1.0] - 2024-10-15
+[0.1.0]: https://github.com/infolektuell/gradle-typst/releases/tag/v0.1.0
 
 ### Added
 
@@ -147,17 +171,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tasks to download and install Typst from GitHub releases
 - DSL extension to configure Typst version and multiple source sets
 - Some auxiliary value sources to retrieve the git commit hash and the latest GitHub release
-
-[unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.7.1...HEAD
-[0.7.1]: https://github.com/infolektuell/gradle-typst/compare/v0.7.0...v0.7.1
-[0.7.0]: https://github.com/infolektuell/gradle-typst/compare/v0.6.2...v0.7.0
-[0.6.2]: https://github.com/infolektuell/gradle-typst/compare/v0.6.1...v0.6.2
-[0.6.1]: https://github.com/infolektuell/gradle-typst/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/infolektuell/gradle-typst/compare/v0.5.0...v0.6.0
-[0.5.0]: https://github.com/infolektuell/gradle-typst/compare/v0.4.2...v0.5.0
-[0.4.2]: https://github.com/infolektuell/gradle-typst/compare/v0.4.1...v0.4.2
-[0.4.1]: https://github.com/infolektuell/gradle-typst/compare/v0.4.0...v0.4.1
-[0.4.0]: https://github.com/infolektuell/gradle-typst/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/infolektuell/gradle-typst/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/infolektuell/gradle-typst/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/infolektuell/gradle-typst/releases/tag/v0.1.0
