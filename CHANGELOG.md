@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 [unreleased]: https://github.com/infolektuell/gradle-typst/compare/v0.8.0...HEAD
 
-## [0.8.0] - 2025-07-06
+## [0.8.0] - 2025-11-12
 [0.8.0]: https://github.com/infolektuell/gradle-typst/compare/v0.7.1...v0.8.0
 
 ### Added
